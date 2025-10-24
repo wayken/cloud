@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="dbutil" />
+        <module name="protobuf" />
+        <module name="registry" />
+        <module name="rest" />
+        <module name="cache" />
+        <module name="cachex" />
+        <module name="kernel" />
+        <module name="guard" />
+        <module name="logger" />
+        <module name="react" />
+        <module name="configure" />
+        <module name="threadx" />
+        <module name="webx" />
+        <module name="balance" />
+        <module name="util" />
+        <module name="discovery" />
+        <module name="okhttp" />
+        <module name="ioc" />
+        <module name="bootor" />
+        <module name="dashboard" />
+        <module name="queue" />
+      </profile>
+    </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="bootstrap" target="1.8" />
+      <module name="gateway" target="1.8" />
+      <module name="gateway-dashboard" target="1.8" />
+      <module name="gateway-kernel" target="1.8" />
+      <module name="mvc" target="1.8" />
+      <module name="netkit" target="1.8" />
+      <module name="socketio" target="1.8" />
+      <module name="traversal" target="1.8" />
+      <module name="websocket" target="1.8" />
+    </bytecodeTargetLevel>
+  </component>
+</project>

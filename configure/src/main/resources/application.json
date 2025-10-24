@@ -1,0 +1,67 @@
+{
+  "name": "MyYamlBean",
+  "courses": [
+    "chinese",
+    "english",
+    "math"
+  ],
+  "scores": {
+    "chinese": 90,
+    "english": 80,
+    "math": 70
+  },
+  "svr": {
+    "host": "127.0.0.2",
+    "port": 8081
+  },
+  "level1": {
+    "level2": {
+      "level3": {
+        "level": "Hello Level2"
+      }
+    }
+  },
+  "ruleList": [
+    {
+      "type": "FLOW",
+      "resource": "flow_qps",
+      "threshold": 20,
+      "courses": [
+        "chinese",
+        "english",
+        "math"
+      ]
+    },
+    {
+      "type": "FUSE",
+      "resource": "fuse_avg_resptime",
+      "threshold": 20
+    }
+  ],
+  "ruleInfo": {
+    "flow_qps":{
+      "type": "FLOW",
+      "resource": "flow_qps",
+      "threshold": 20,
+      "courses": [
+        "chinese",
+        "english",
+        "math"
+      ]
+    },
+    "fuse_avg_resptime":{
+      "type": "FUSE",
+      "resource": "fuse_avg_resptime",
+      "threshold": 20
+    }
+  },
+  "log": {
+    "path": "/var/log",
+    "name": "myapp.log",
+    "levels": [0, 1, 2],
+    "limit-config": {
+      "id": 100,
+      "name": "MyLimit"
+    }
+  }
+}
