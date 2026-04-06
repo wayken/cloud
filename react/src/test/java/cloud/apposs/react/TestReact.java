@@ -22,33 +22,33 @@ public class TestReact {
 
         CountDownLatch latch = new CountDownLatch(1);
         React.emitter(new IoEmitter<String>() {
-            @Override
-            public String call() throws Exception {
-                System.err.println("----------------- 1." + Thread.currentThread() + " ----------------");
-                return "This is From Executor-" + Thread.currentThread().getName();
-            }
-        }).subscribeOn(executor)
-        .subscribe(new IoSubscriber<String>() {
-            @Override
-            public void onNext(String value) throws Exception {
-                System.err.println("----------------- 2." + Thread.currentThread() + " ----------------");
-                System.out.println(value);
-                Thread.sleep(2000);
-                System.out.println("sleep in");
-            }
+                    @Override
+                    public String call() throws Exception {
+                        System.err.println("----------------- 1." + Thread.currentThread() + " ----------------");
+                        return "This is From Executor-" + Thread.currentThread().getName();
+                    }
+                }).subscribeOn(executor)
+                .subscribe(new IoSubscriber<String>() {
+                    @Override
+                    public void onNext(String value) throws Exception {
+                        System.err.println("----------------- 2." + Thread.currentThread() + " ----------------");
+                        System.out.println(value);
+                        Thread.sleep(2000);
+                        System.out.println("sleep in");
+                    }
 
-            @Override
-            public void onCompleted() {
-                System.err.println("----------------- 3." + Thread.currentThread() + " ----------------");
-                System.out.println("complete");
-                latch.countDown();
-                ((ExecutorService) executor).shutdown();
-            }
+                    @Override
+                    public void onCompleted() {
+                        System.err.println("----------------- 3." + Thread.currentThread() + " ----------------");
+                        System.out.println("complete");
+                        latch.countDown();
+                        ((ExecutorService) executor).shutdown();
+                    }
 
-            @Override
-            public void onError(Throwable cause) {
-            }
-        }).start();
+                    @Override
+                    public void onError(Throwable cause) {
+                    }
+                }).start();
         latch.await();
     }
 
@@ -147,21 +147,21 @@ public class TestReact {
                         return "AA:" + t;
                     }
                 }).subscribe(new IoSubscriber<String>() {
-            @Override
-            public void onNext(String value) {
-                System.out.println(value);
-            }
+                    @Override
+                    public void onNext(String value) {
+                        System.out.println(value);
+                    }
 
-            @Override
-            public void onCompleted() {
-                System.out.println("execute complete");
-            }
+                    @Override
+                    public void onCompleted() {
+                        System.out.println("execute complete");
+                    }
 
-            @Override
-            public void onError(Throwable e) {
-                e.printStackTrace();
-            }
-        }).start();
+                    @Override
+                    public void onError(Throwable e) {
+                        e.printStackTrace();
+                    }
+                }).start();
     }
 
     @Test
@@ -171,53 +171,53 @@ public class TestReact {
         dataList.add(Pair.build(2, "two"));
         dataList.add(Pair.build(3, "three"));
         React.from(dataList)
-        .map(new IoFunction<Pair<Integer, String>, String>() {
-            @Override
-            public String call(Pair<Integer, String> t) throws Exception {
-                return "AA:" + t.key() + "-" + t.value();
-            }
-        }).subscribe(new IoSubscriber<String>() {
-            @Override
-            public void onNext(String value) {
-                System.out.println(value);
-            }
+                .map(new IoFunction<Pair<Integer, String>, String>() {
+                    @Override
+                    public String call(Pair<Integer, String> t) throws Exception {
+                        return "AA:" + t.key() + "-" + t.value();
+                    }
+                }).subscribe(new IoSubscriber<String>() {
+                    @Override
+                    public void onNext(String value) {
+                        System.out.println(value);
+                    }
 
-            @Override
-            public void onCompleted() {
-                System.out.println("execute complete");
-            }
+                    @Override
+                    public void onCompleted() {
+                        System.out.println("execute complete");
+                    }
 
-            @Override
-            public void onError(Throwable e) {
-                e.printStackTrace();
-            }
-        }).start();
+                    @Override
+                    public void onError(Throwable e) {
+                        e.printStackTrace();
+                    }
+                }).start();
     }
 
     @Test
     public void testReactReduce() throws Exception {
         React.from(1, 2, 3)
-        .reduce(new IoReduce<Integer, Integer, Integer>() {
-            @Override
-            public Integer call(Integer v1, Integer v2) throws Exception {
-                return v1 + v2;
-            }
-        }).subscribe(new IoSubscriber<Integer>() {
-            @Override
-            public void onNext(Integer value) {
-                System.out.println(value);
-            }
+                .reduce(new IoReduce<Integer, Integer, Integer>() {
+                    @Override
+                    public Integer call(Integer v1, Integer v2) throws Exception {
+                        return v1 + v2;
+                    }
+                }).subscribe(new IoSubscriber<Integer>() {
+                    @Override
+                    public void onNext(Integer value) {
+                        System.out.println(value);
+                    }
 
-            @Override
-            public void onCompleted() {
-                System.out.println("execute complete");
-            }
+                    @Override
+                    public void onCompleted() {
+                        System.out.println("execute complete");
+                    }
 
-            @Override
-            public void onError(Throwable e) {
-                e.printStackTrace();
-            }
-        }).start();
+                    @Override
+                    public void onError(Throwable e) {
+                        e.printStackTrace();
+                    }
+                }).start();
     }
 
     @Test
@@ -262,27 +262,27 @@ public class TestReact {
 
         long startTime = System.currentTimeMillis();
         React.create(new React.OnSubscribe<String>() {
-            @Override
-            public void call(SafeIoSubscriber<? super String> t) throws Exception {
-                t.onNext("This is a Emitter String");
-                t.onCompleted();
-            }
-        }).sleep(scheduler, 200)
-        .map(new IoFunction<String, String>() {
-            @Override
-            public String call(String s) throws Exception {
-                System.out.println("map in " + s + ", Cost Time:" + (System.currentTimeMillis() - startTime));
-                return s;
-            }
-        })
-        .sleep(scheduler, 1200)
-        .subscribe(new IoAction<String>() {
-            @Override
-            public void call(String s) throws Exception {
-                System.out.println(s + ", Cost Time:" + (System.currentTimeMillis() - startTime));
-                latch.countDown();
-            }
-        }).start();
+                    @Override
+                    public void call(SafeIoSubscriber<? super String> t) throws Exception {
+                        t.onNext("This is a Emitter String");
+                        t.onCompleted();
+                    }
+                }).sleep(scheduler, 200)
+                .map(new IoFunction<String, String>() {
+                    @Override
+                    public String call(String s) throws Exception {
+                        System.out.println("map in " + s + ", Cost Time:" + (System.currentTimeMillis() - startTime));
+                        return s;
+                    }
+                })
+                .sleep(scheduler, 1200)
+                .subscribe(new IoAction<String>() {
+                    @Override
+                    public void call(String s) throws Exception {
+                        System.out.println(s + ", Cost Time:" + (System.currentTimeMillis() - startTime));
+                        latch.countDown();
+                    }
+                }).start();
         latch.await();
     }
 
@@ -291,30 +291,30 @@ public class TestReact {
         final CountDownLatch latch = new CountDownLatch(1);
         long startTime = System.currentTimeMillis();
         React.from("AA", "BB")
-        .repeat(2)
-        .map(new IoFunction<String, String>() {
-            @Override
-            public String call(String s) throws Exception {
-                System.out.println("map in " + s + ", Cost Time:" + (System.currentTimeMillis() - startTime));
-                return s;
-            }
-        })
-        .subscribe(new IoSubscriber<String>() {
-            @Override
-            public void onNext(String value) {
-                System.out.println(value);
-            }
+                .repeat(2)
+                .map(new IoFunction<String, String>() {
+                    @Override
+                    public String call(String s) throws Exception {
+                        System.out.println("map in " + s + ", Cost Time:" + (System.currentTimeMillis() - startTime));
+                        return s;
+                    }
+                })
+                .subscribe(new IoSubscriber<String>() {
+                    @Override
+                    public void onNext(String value) {
+                        System.out.println(value);
+                    }
 
-            @Override
-            public void onCompleted() {
-                latch.countDown();
-            }
+                    @Override
+                    public void onCompleted() {
+                        latch.countDown();
+                    }
 
-            @Override
-            public void onError(Throwable e) {
-                e.printStackTrace();
-            }
-        }).start();
+                    @Override
+                    public void onError(Throwable e) {
+                        e.printStackTrace();
+                    }
+                }).start();
         latch.await();
     }
 
@@ -453,41 +453,41 @@ public class TestReact {
 
         final Executor executor = getNamedExecutor("ExecutorOnThread");
         React.create(new React.OnSubscribe<String>() {
-            @Override
-            public void call(SafeIoSubscriber<? super String> t) throws Exception {
-                System.err.println("----------------- Emitter " + Thread.currentThread() + " ----------------");
-                t.onNext("This is a Emitter String");
-                t.onCompleted();
-            }
-        })
-        .map(new IoFunction<String, String>() {
-            @Override
-            public String call(String t) {
-                System.err.println("----------------- Map " + Thread.currentThread() + " ----------------");
-                return "AA:" + t;
-            }
-        })
-        .subscribeOn(executor)
-        .subscribe(new IoSubscriber<String>() {
-            @Override
-            public void onNext(String value) {
-                System.err.println("----------------- OnSubcriber " + Thread.currentThread() + " ----------------");
-                System.out.println("subscribe recv from:" + value);
-                ((ExecutorService) executor).shutdown();
-            }
+                    @Override
+                    public void call(SafeIoSubscriber<? super String> t) throws Exception {
+                        System.err.println("----------------- Emitter " + Thread.currentThread() + " ----------------");
+                        t.onNext("This is a Emitter String");
+                        t.onCompleted();
+                    }
+                })
+                .map(new IoFunction<String, String>() {
+                    @Override
+                    public String call(String t) {
+                        System.err.println("----------------- Map " + Thread.currentThread() + " ----------------");
+                        return "AA:" + t;
+                    }
+                })
+                .subscribeOn(executor)
+                .subscribe(new IoSubscriber<String>() {
+                    @Override
+                    public void onNext(String value) {
+                        System.err.println("----------------- OnSubcriber " + Thread.currentThread() + " ----------------");
+                        System.out.println("subscribe recv from:" + value);
+                        ((ExecutorService) executor).shutdown();
+                    }
 
-            @Override
-            public void onCompleted() {
-                System.out.println("execute complete");
-                ((ExecutorService) executor).shutdown();
-            }
+                    @Override
+                    public void onCompleted() {
+                        System.out.println("execute complete");
+                        ((ExecutorService) executor).shutdown();
+                    }
 
-            @Override
-            public void onError(Throwable e) {
-                e.printStackTrace();
-                ((ExecutorService) executor).shutdown();
-            }
-        }).start();
+                    @Override
+                    public void onError(Throwable e) {
+                        e.printStackTrace();
+                        ((ExecutorService) executor).shutdown();
+                    }
+                }).start();
 
         long exeTime = System.currentTimeMillis() - start;
         System.err.println("----------------- " + Thread.currentThread() + " execute time:" + exeTime + " ----------------");
@@ -615,6 +615,131 @@ public class TestReact {
             }
         }).start();
         latch.await();
+    }
+
+    /**
+     * 测试loop循环：handler返回null时终止循环，最终值传递给下游
+     * 模拟计数器从0累加到5后停止
+     */
+    @Test
+    public void testReactLoopUntilNull() throws Exception {
+        final CountDownLatch latch = new CountDownLatch(1);
+        React.create(new React.OnSubscribe<Integer>() {
+            @Override
+            public void call(SafeIoSubscriber<? super Integer> t) throws Exception {
+                t.onNext(0);
+                t.onCompleted();
+            }
+        }).loop(new IoFunction<Integer, React<Integer>>() {
+            @Override
+            public React<Integer> call(Integer value) throws Exception {
+                System.out.println("loop value: " + value);
+                if (value >= 5) {
+                    // 返回null终止循环
+                    return null;
+                }
+                // 返回新的React继续下一轮循环
+                final int next = value + 1;
+                return React.create(new React.OnSubscribe<Integer>() {
+                    @Override
+                    public void call(SafeIoSubscriber<? super Integer> t) throws Exception {
+                        t.onNext(next);
+                        t.onCompleted();
+                    }
+                });
+            }
+        }).subscribe(new IoSubscriber<Integer>() {
+            @Override
+            public void onNext(Integer value) throws Exception {
+                System.out.println("loop final value: " + value);
+            }
+
+            @Override
+            public void onCompleted() {
+                System.out.println("----------------- Loop Complete -----------------");
+                latch.countDown();
+            }
+
+            @Override
+            public void onError(Throwable cause) {
+                System.err.println("Exception Caught");
+                cause.printStackTrace();
+                latch.countDown();
+            }
+        }).start();
+        latch.await();
+    }
+
+    /**
+     * 测试loop循环：模拟分页查询，每次返回一页数据，直到最后一页返回null终止循环
+     */
+    @Test
+    public void testReactLoopPaging() throws Exception {
+        final CountDownLatch latch = new CountDownLatch(1);
+        final int pageSize = 3;
+        final List<String> allData = new ArrayList<String>();
+        // 模拟总共10条数据，分页拉取
+        final int totalRows = 10;
+
+        React.create(new React.OnSubscribe<List<String>>() {
+            @Override
+            public void call(SafeIoSubscriber<? super List<String>> t) throws Exception {
+                // 第一页从offset=0开始
+                List<String> page = fetchPage(0, pageSize, totalRows);
+                t.onNext(page);
+                t.onCompleted();
+            }
+        }).loop(new IoFunction<List<String>, React<List<String>>>() {
+            private int offset = pageSize;
+
+            @Override
+            public React<List<String>> call(List<String> page) throws Exception {
+                allData.addAll(page);
+                System.out.println("fetched page: " + page);
+                if (page.size() < pageSize) {
+                    // 最后一页，终止循环
+                    return null;
+                }
+                final int currentOffset = offset;
+                offset += pageSize;
+                return React.create(new React.OnSubscribe<List<String>>() {
+                    @Override
+                    public void call(SafeIoSubscriber<? super List<String>> t) throws Exception {
+                        List<String> nextPage = fetchPage(currentOffset, pageSize, totalRows);
+                        t.onNext(nextPage);
+                        t.onCompleted();
+                    }
+                });
+            }
+        }).subscribe(new IoSubscriber<List<String>>() {
+            @Override
+            public void onNext(List<String> value) throws Exception {
+                allData.addAll(value);
+                System.out.println("all data size: " + allData.size());
+            }
+
+            @Override
+            public void onCompleted() {
+                System.out.println("----------------- Paging Loop Complete -----------------");
+                latch.countDown();
+            }
+
+            @Override
+            public void onError(Throwable cause) {
+                System.err.println("Exception Caught");
+                cause.printStackTrace();
+                latch.countDown();
+            }
+        }).start();
+        latch.await();
+    }
+
+    private static List<String> fetchPage(int offset, int pageSize, int total) {
+        List<String> page = new ArrayList<String>();
+        for (int i = offset; i < Math.min(offset + pageSize, total); i++) {
+            page.add("row-" + i);
+        }
+        return page;
     }
 
     /**

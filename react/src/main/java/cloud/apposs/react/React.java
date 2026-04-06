@@ -206,6 +206,13 @@ public class React<T> {
     }
 
     /**
+     * React循环执行机制，主要应用于需要根据上一轮结果决定是否继续下一轮执行的场景
+     */
+    public final React<T> loop(IoFunction<T, ? extends React<T>> handler) {
+        return create(new OnSubscribeLoop<T>(this, handler));
+    }
+
+    /**
      * 基于{@link StandardResult}的数据响应码操作，
      * 响应码为成功的数据进行正常流程处理，响应码为失败的则进入异常流程处理
      */
