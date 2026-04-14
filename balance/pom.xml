@@ -34,7 +34,7 @@
             <artifactId>qconf</artifactId>
             <version>1.2.2</version>
             <scope>system</scope>
-            <systemPath>${pom.basedir}/../lib/qconf-client-1.2.2.jar</systemPath>
+            <systemPath>${pom.basedir}/../library/qconf-client-1.2.2.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>cloud.apposs</groupId>
