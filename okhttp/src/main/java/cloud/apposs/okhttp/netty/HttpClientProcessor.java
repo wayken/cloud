@@ -93,7 +93,7 @@ public class HttpClientProcessor extends ChannelDuplexHandler {
                 }
                 String contentType = httpResponse.headers().get("Content-Type");
                 isSseTransfer = contentType != null && contentType.toLowerCase().startsWith(MediaType.TEXT_EVENT_STREAM_VALUE);
-                OkResponse response = new OkResponse(request.uri(), httpResponse.status().code(), headers, null);
+                OkResponse response = new OkResponse(request.uri(), httpResponse.status().code(), headers, CachedFileStream.wrap(""));
                 response.setCompleted(false);
                 request.setAttribute(NettyIoConnection.CONTEXT_RESPONSE, response);
                 return;
@@ -115,7 +115,7 @@ public class HttpClientProcessor extends ChannelDuplexHandler {
                     isSseTransfer = false;
                     response.setCompleted(true);
                 }
-                response.setStream(chunk);
+                response.getBuffer().reset().write(chunk);
                 subscriber.onNext(response);
                 return;
             }

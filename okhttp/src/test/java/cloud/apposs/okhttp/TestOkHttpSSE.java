@@ -89,7 +89,7 @@ public class TestOkHttpSSE {
         okHttp.execute(request).subscribe(new IoSubscriber<OkResponse>() {
             @Override
             public void onNext(OkResponse value) throws Exception {
-                System.out.println(value.getStream());
+                System.out.println(value.getContent());
                 if (value.isCompleted()) {
                     latch.countDown();
                 }

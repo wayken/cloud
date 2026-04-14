@@ -54,6 +54,16 @@ public final class CachedFileStream implements AutoCloseable {
     }
 
     /**
+     * 将字符串包装成CachedFileStream，此时字节数组会存储于内存中
+     */
+    public static CachedFileStream wrap(String buffer) throws IOException {
+        CachedFileStream cachedFileStream = new CachedFileStream(
+                DEFAULT_THRESHOLD, DEFAULT_TMP_FILE_PREFIX, DEFAULT_TMP_FILE_SUFFIX, null);
+        cachedFileStream.write(buffer);
+        return cachedFileStream;
+    }
+
+    /**
      * 将字节数组包装成CachedFileStream，此时字节数组会存储于内存中
      */
     public static CachedFileStream wrap(byte[] buffer) throws IOException {
@@ -454,12 +464,13 @@ public final class CachedFileStream implements AutoCloseable {
     /**
      * 重置缓冲状态，以应对同一个实例的数据重复读取写入
      */
-    public void reset() throws IOException {
+    public CachedFileStream reset() throws IOException {
         if (isInMemory()) {
             ((ByteArrayOutputStream) stream).reset();
         } else {
             stream = new FileOutputStream(file);
         }
+        return this;
     }
 
     @Override

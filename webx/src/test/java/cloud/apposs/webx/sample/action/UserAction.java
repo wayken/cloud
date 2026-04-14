@@ -169,7 +169,7 @@ public class UserAction {
             if (!response.isSseResponse()) {
                 return response.getContent();
             }
-            return SseEmitter.builder(response.getStream(), response.isCompleted());
+            return SseEmitter.builder(response.getContent(), response.isCompleted());
         });
     }
 

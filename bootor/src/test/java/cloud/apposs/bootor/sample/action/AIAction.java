@@ -40,7 +40,7 @@ public class AIAction {
         OkRequest request = OkRequest.builder().url(URL).sse(true).post(formEntity);
         request.header("Authorization", "Bearer " + TOKEN);
         return okHttp.execute(request).map((OkResponse result) -> {
-            String data = result.getStream();
+            String data = result.getContent();
             System.out.println("SSE Data: " + data);
             SseEmitter emitter = SseEmitter.builder(data);
             if (result.isCompleted()) {

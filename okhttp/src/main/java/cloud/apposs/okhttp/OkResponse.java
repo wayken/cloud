@@ -2,11 +2,13 @@ package cloud.apposs.okhttp;
 
 import cloud.apposs.util.CachedFileStream;
 import cloud.apposs.util.CharsetUtil;
+import cloud.apposs.util.HttpStatus;
 import cloud.apposs.util.MediaType;
 
 import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.Charset;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -22,17 +24,29 @@ public class OkResponse {
     // 响应内容缓冲区，可能是内存数据，也可能是文件流
     private final CachedFileStream buffer;
 
-    // SSE响应数据流
-    private String stream;
-
     // 数据响应是否结束，在SSE中，数据响应过程中一直是false，直到SSE结束的时候才为true，其他响应中为true
     private boolean completed = true;
+
+    // 当前数据响应存储的一些状态值，可以在数据响应过程中存储一些解析状态值，供后续服务使用
+    private final Map<Object, Object> attributes = new HashMap<Object, Object>(1);
 
     public OkResponse(URI url, int status, Map<String, String> headers, CachedFileStream buffer) {
         this.url = url;
         this.status = status;
         this.headers = headers;
         this.buffer = buffer;
+    }
+
+    /**
+     * 构造一个指定内容的响应，内容类型默认为text/plain
+     *
+     * @param  content 响应内容
+     * @return 响应对象
+     */
+    public static OkResponse ofContent(String content) throws IOException {
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Content-Type", MediaType.TEXT_PLAIN.toString());
+        return new OkResponse(null, HttpStatus.HTTP_STATUS_200.getCode(), headers, CachedFileStream.wrap(content.getBytes()));
     }
 
     public URI getUrl() {
@@ -98,19 +112,36 @@ public class OkResponse {
         return contentType != null && contentType.startsWith(MediaType.TEXT_EVENT_STREAM_VALUE);
     }
 
-    public String getStream() {
-        return stream;
-    }
-
-    public void setStream(String stream) {
-        this.stream = stream;
-    }
-
     public boolean isCompleted() {
         return completed;
     }
 
     public void setCompleted(boolean completed) {
         this.completed = completed;
+    }
+
+    public Object getAttribute(Object key) {
+        return getAttribute(key, null);
+    }
+
+    public Object getAttribute(Object key, Object defaultVal) {
+        Object attr = attributes.get(key);
+        if (attr == null && defaultVal != null) {
+            attr = defaultVal;
+            attributes.put(key, attr);
+        }
+        return attr;
+    }
+
+    public Map<Object, Object> getAttributes() {
+        return attributes;
+    }
+
+    public Object setAttribute(Object key, Object value) {
+        return attributes.put(key, value);
+    }
+
+    public boolean removeAttribute(Object key) {
+        return attributes.remove(key) != null;
     }
 }
