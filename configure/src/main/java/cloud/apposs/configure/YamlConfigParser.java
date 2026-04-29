@@ -125,7 +125,7 @@ public class YamlConfigParser implements ConfigurationParser {
 
     @SuppressWarnings("unchecked")
     private static boolean doParsePropertyNode(Map<String, Object> document, String methodName,
-                String propertyName, Object model, Class<?> modelClazz, Method method) throws Exception {
+                                               String propertyName, Object model, Class<?> modelClazz, Method method) throws Exception {
         // 解析XML PROPERTY属性值并反射调用到类中
         Class<?>[] methodTypes = method.getParameterTypes();
         // setXXX(Object obj)方法必须要有参数
@@ -137,34 +137,6 @@ public class YamlConfigParser implements ConfigurationParser {
             Object nodeVal = document.get(propertyName);
             if (nodeVal != null) {
                 method.invoke(model, nodeVal);
-            }
-        } else if (methodTypes[0].equals(List.class)) {
-            // 对象属性为List对象
-            Field field = modelClazz.getDeclaredField(methodName);
-            field.setAccessible(true);
-            // 获取List泛型类型
-            ParameterizedType pt = (ParameterizedType)field.getGenericType();
-            Class<?> genericClazz = (Class<?>)pt.getActualTypeArguments()[0];
-            if (ReflectUtil.isGenericType(genericClazz)) {
-                // List值为普通数据类型，直接赋值List
-                Object nodeVal = document.get(propertyName);
-                if (nodeVal != null) {
-                    method.invoke(model, nodeVal);
-                }
-            } else {
-                // List值为自定义对象类型，递归解析对象并添加到List中
-                List<Object> fieldList = (List<Object>) field.get(model);
-                if (fieldList == null) {
-                    fieldList = new LinkedList<Object>();
-                    method.invoke(model, fieldList);
-                }
-                List<Map<String, Object>> childDocList = (List<Map<String, Object>>) document.get(propertyName);
-                Map<String, Method> modelMethods = ReflectUtil.getDeclaredMethodMap(genericClazz);
-                for (Map<String, Object> childDoc : childDocList) {
-                    Object fieldObject = genericClazz.newInstance();
-                    doParseOptional(childDoc, modelMethods, fieldObject, fieldObject.getClass());
-                    fieldList.add(fieldObject);
-                }
             }
         } else if (methodTypes[0].equals(Map.class)) {
             // 对象属性为Map对象
@@ -198,6 +170,77 @@ public class YamlConfigParser implements ConfigurationParser {
                     Map<String, Object> childDoc = (Map<String, Object>) param.get(key);
                     doParseOptional(childDoc, modelMethods, fieldObject, fieldObject.getClass());
                     fieldMap.put(key, fieldObject);
+                }
+            }
+        } else if (methodTypes[0].equals(List.class)) {
+            // 对象属性为List对象
+            Field field = modelClazz.getDeclaredField(methodName);
+            field.setAccessible(true);
+            // 获取List泛型类型
+            ParameterizedType pt = (ParameterizedType)field.getGenericType();
+            Class<?> genericClazz = (Class<?>)pt.getActualTypeArguments()[0];
+            if (ReflectUtil.isGenericType(genericClazz)) {
+                // List值为普通数据类型，直接赋值List
+                Object nodeVal = document.get(propertyName);
+                if (nodeVal != null) {
+                    method.invoke(model, nodeVal);
+                }
+            } else {
+                // List值为自定义对象类型，递归解析对象并添加到List中
+                List<Object> fieldList = (List<Object>) field.get(model);
+                if (fieldList == null) {
+                    fieldList = new LinkedList<Object>();
+                    method.invoke(model, fieldList);
+                }
+                List<Map<String, Object>> childDocList = (List<Map<String, Object>>) document.get(propertyName);
+                Map<String, Method> modelMethods = ReflectUtil.getDeclaredMethodMap(genericClazz);
+                for (Map<String, Object> childDoc : childDocList) {
+                    Object fieldObject = genericClazz.newInstance();
+                    doParseOptional(childDoc, modelMethods, fieldObject, fieldObject.getClass());
+                    fieldList.add(fieldObject);
+                }
+            }
+        } else if (methodTypes[0].equals(Param.class)) {
+            // 对象属性为Param对象（Map的封装）
+            Field field = modelClazz.getDeclaredField(methodName);
+            field.setAccessible(true);
+            Param fieldParam = (Param) field.get(model);
+            if (fieldParam == null) {
+                fieldParam = Param.builder();
+                method.invoke(model, fieldParam);
+            }
+            Map<String, Object> paramDoc = (Map<String, Object>) document.get(propertyName);
+            if (paramDoc != null) {
+                fieldParam.putAll(paramDoc);
+            }
+        } else if (methodTypes[0].equals(Table.class)) {
+            // 对象属性为Table对象（List的封装）
+            Field field = modelClazz.getDeclaredField(methodName);
+            field.setAccessible(true);
+            // 获取Table泛型类型
+            ParameterizedType pt = (ParameterizedType) field.getGenericType();
+            Class<?> genericClazz = (Class<?>) pt.getActualTypeArguments()[0];
+            Table<Object> fieldTable = (Table<Object>) field.get(model);
+            if (fieldTable == null) {
+                fieldTable = Table.builder();
+                method.invoke(model, fieldTable);
+            }
+            if (ReflectUtil.isGenericType(genericClazz)) {
+                // Table值为普通数据类型，直接赋值列表元素
+                List<Object> nodeVal = (List<Object>) document.get(propertyName);
+                if (nodeVal != null) {
+                    fieldTable.addAll(nodeVal);
+                }
+            } else {
+                // Table值为自定义对象类型，递归解析对象并添加到Table中
+                List<Map<String, Object>> childDocList = (List<Map<String, Object>>) document.get(propertyName);
+                Map<String, Method> modelMethods = ReflectUtil.getDeclaredMethodMap(genericClazz);
+                if (childDocList != null) {
+                    for (Map<String, Object> childDoc : childDocList) {
+                        Object fieldObject = genericClazz.newInstance();
+                        doParseOptional(childDoc, modelMethods, fieldObject, fieldObject.getClass());
+                        fieldTable.add(fieldObject);
+                    }
                 }
             }
         } else {

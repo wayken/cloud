@@ -759,7 +759,7 @@ public class Param implements Map<String, Object> {
             }
             String tab2 = tab1 + "  ";
 
-            info.append(tab1).append("{").append(line);
+            info.append("{").append(line);
             int count = 0, total = datas.size();
             for (Entry<String, Object> entry : datas.entrySet()) {
                 String key = entry.getKey();

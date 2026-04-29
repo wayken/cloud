@@ -221,23 +221,22 @@ public class Table<T> implements List<T> {
             for (int t = 0; t < tab; t++) {
                 tab1 += "  ";
             }
+            String tab2 = tab1 + "  ";
 
-            info.append("[").append(line).append(tab1);
+            info.append("[").append(line);
             int total = data.size();
             for (int i = 0; i < total; i++) {
                 T value = data.get(i);
                 if (value != null) {
-                    info.append(JsonUtil.toJson(value, format, tab + 1, line, encode));
+                    info.append(tab2).append(JsonUtil.toJson(value, format, tab + 1, line, encode));
                     if (i < total - 1) {
-                        if (value instanceof Param) {
-                            info.append(",").append(line);
-                        } else {
-                            info.append(",").append(" ");
-                        }
+                        info.append(",").append(line);
+                    } else {
+                        info.append(line);
                     }
                 }
             }
-            info.append(line).append(tab1).append("]");
+            info.append(tab1).append("]");
         }
         return info.toString();
     }

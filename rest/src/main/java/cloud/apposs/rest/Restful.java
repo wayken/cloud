@@ -5,7 +5,7 @@ import cloud.apposs.guard.ResourceToken;
 import cloud.apposs.ioc.BeanFactory;
 import cloud.apposs.logger.Logger;
 import cloud.apposs.react.IoEmitter;
-import cloud.apposs.react.IoSubscriber;
+import cloud.apposs.react.IoSubscripberAdapter;
 import cloud.apposs.react.React;
 import cloud.apposs.rest.annotation.Action;
 import cloud.apposs.rest.annotation.Order;
@@ -388,12 +388,12 @@ public final class Restful<R, P> {
      * 处理基于React的异步数据响应，
      * 异步处理结束后会触发该类的处理，最终实现异步处理结束后的视图渲染、事件监听和异常处理
      */
-    private class ReactSubcriber implements IoSubscriber<Object> {
-        private final Handler handler;
-
+    private class ReactSubcriber extends IoSubscripberAdapter<Object> {
         private final R request;
 
         private final P response;
+
+        private final Handler handler;
 
         private ReactSubcriber(Handler handler, R request, P response) {
             this.handler = handler;
@@ -427,10 +427,6 @@ public final class Restful<R, P> {
                 handlerInterceptorSupport.afterCompletion(request, response, handler, value);
                 handlerListenerSupport.handlerComplete(request, response, handler, value);
             }
-        }
-
-        @Override
-        public void onCompleted() {
         }
 
         @Override

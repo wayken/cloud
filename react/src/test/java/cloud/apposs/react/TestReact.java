@@ -69,13 +69,13 @@ public class TestReact {
             public OperateorIntercept.IResult call(String s) throws Exception {
                 System.out.println("interceptor: " + s);
                 // 可以在第二个拦截器拦截并抛出异常，流程就不会执行
-//                if (s.equals("two")) {
-//                    return OperateorIntercept.IResult.FAILURE;
-//                }
+                if (s.equals("two")) {
+                    return OperateorIntercept.IResult.FAILURE;
+                }
                 // 可以在第三个拦截器拦截并跳过并且不会抛出异常，且下面流程就不会执行
-//                if (s.equals("three")) {
-//                    return OperateorIntercept.IResult.SKIP;
-//                }
+                if (s.equals("three")) {
+                    return OperateorIntercept.IResult.SKIP;
+                }
                 return OperateorIntercept.IResult.SUCCESS;
             }
         }, new IoEmitter<React<? extends Integer>>() {
@@ -84,7 +84,7 @@ public class TestReact {
                 System.out.println("just in");
                 return React.just(1);
             }
-        }).subscribe(new IoSubscriber<Integer>() {
+        }).subscribe(new IoSubscripberAdapter<Integer>() {
             @Override
             public void onNext(Integer value) throws Exception {
                 System.out.println("all execute result: " + value);
