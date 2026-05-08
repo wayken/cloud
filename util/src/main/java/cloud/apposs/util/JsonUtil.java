@@ -9,40 +9,22 @@ import java.util.List;
 public class JsonUtil {
     private static final int JSON_CUT_LENGTH = 100;
 
-    /**
-     * Json内容解析的各种状态
-     */
-    /**
-     * Json解析初始状态
-     */
+    /** Json内容解析的各种状态 */
+    // Json解析初始状态
     private static final int JSON_STATUS_INIT = 0;
-    /**
-     * Json开始解析状态
-     */
+    // Json开始解析状态
     private static final int JSON_STATUS_START = 1;
-    /**
-     * Json Key以双引号开始的解析
-     */
+    // Json Key以双引号开始的解析
     private static final int JSON_STATUS_KEY_DOUBLE_QUOTE = 2;
-    /**
-     * Json Key以单引号开始的解析
-     */
+    // Json Key以单引号开始的解析
     private static final int JSON_STATUS_KEY_SINGLE_QUOTE = 3;
-    /**
-     * Json 冒号的解析
-     */
+    // Json 冒号的解析
     private static final int JSON_STATUS_COLON = 4;
-    /**
-     * Json Value的解析
-     */
+    // Json Value的解析
     private static final int JSON_STATUS_VALUE_START = 5;
-    /**
-     * Json Key-Value的解析结束后解析
-     */
+    // Json Key-Value的解析结束后解析
     private static final int JSON_STATUS_VALUE_END = 6;
-    /**
-     * Json解析状态结束
-     */
+    // Json解析状态结束
     private static final int JSON_STATUS_FINISH = 7;
 
     public static Param parseJsonParam(String json) {
@@ -226,6 +208,10 @@ public class JsonUtil {
         return toJson(value, false, 0, null, false);
     }
 
+    public static String toJson(Object value, boolean format) {
+        return toJson(value, true, 0, null, false);
+    }
+
     /**
      * 将Object输出成Json需要的格式内容
      *
@@ -267,21 +253,13 @@ public class JsonUtil {
      * Json解析过程中的各状态属性维护
      */
     private static final class JsonParseStatus {
-        /**
-         * 解析Json所对应错误行数
-         */
+        // 解析Json所对应错误行数
         public int errnoLineNo = 1;
-        /**
-         * 解析Json所对应错误行的索引位
-         */
+        // 解析Json所对应错误行的索引位
         public int errnoLineIdx = 0;
-        /**
-         * 开始解析Json Key所在的全文索引位
-         */
+        // 开始解析Json Key所在的全文索引位
         public int keyBegIdx = -1;
-        /**
-         * 结束解析Json Vlue所在的全文索引位
-         */
+        // 结束解析Json Vlue所在的全文索引位
         public int valueEndIdx = -1;
     }
 
@@ -314,8 +292,7 @@ public class JsonUtil {
     /**
      * 解析Param对象
      */
-    private static Param parseJsonValueParam(String json, int index,
-                                             Ref<String> message, JsonParseStatus context) {
+    private static Param parseJsonValueParam(String json, int index, Ref<String> message, JsonParseStatus context) {
         Param param = new Param();
         int length = json.length();
         int status = JSON_STATUS_INIT;
@@ -487,8 +464,7 @@ public class JsonUtil {
      * 解析List对象
      */
     @SuppressWarnings("unchecked")
-    private static <T> Table<T> parseJsonValueTable(String json, int start,
-                                                    Ref<String> message, JsonParseStatus context, Class<T> classType) {
+    private static <T> Table<T> parseJsonValueTable(String json, int start, Ref<String> message, JsonParseStatus context, Class<T> classType) {
         Table<T> table = new Table<T>();
         int length = json.length();
         int status = JSON_STATUS_INIT;
@@ -608,8 +584,7 @@ public class JsonUtil {
     /**
      * 解析Json双引号字符串值
      */
-    private static String parseJsonValueString(String json, int index,
-                                               Ref<String> message, JsonParseStatus context) {
+    private static String parseJsonValueString(String json, int index, Ref<String> message, JsonParseStatus context) {
         int length = json.length();
         int wordIndex = index + 1;
         int lineIdxStart = context.errnoLineIdx;
@@ -651,8 +626,7 @@ public class JsonUtil {
     /**
      * 解析Json数字值
      */
-    private static Object parseJsonValueNumber(String json, int index,
-                                               Ref<String> message, JsonParseStatus context) {
+    private static Object parseJsonValueNumber(String json, int index, Ref<String> message, JsonParseStatus context) {
         int length = json.length();
         char letter;
         int wordIndex = index;
@@ -699,14 +673,12 @@ public class JsonUtil {
         return null;
     }
 
-    private static String errorMessage(String message, int line,
-                                       int index, String json) {
+    private static String errorMessage(String message, int line, int index, String json) {
         return errorMessage(message, line, index, json, null, null, null);
     }
 
 
-    private static String errorMessage(String message, int line,
-                                       int index, String json, String key, Object value, Exception exp) {
+    private static String errorMessage(String message, int line, int index, String json, String key, Object value, Exception exp) {
         StringBuilder error = new StringBuilder(128);
         error.append(String.format("%s;line=%d;index=%d;", message, line, index));
         if (key != null) {
