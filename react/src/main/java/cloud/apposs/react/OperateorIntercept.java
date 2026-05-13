@@ -1,12 +1,14 @@
 package cloud.apposs.react;
 
+import cloud.apposs.react.React.OnSubscribe;
+
 import java.util.Iterator;
 
 /**
  * 基于异步的拦截器设计，通过多个sequences拦截器逐个判断返回结果，
  * 当返回结果不符合预期时则直接调用actual.onError(cause)抛出异常由业务逻辑实现
  */
-public class OperateorIntercept<T, R> implements React.OnSubscribe<R> {
+public class OperateorIntercept<T, R> implements OnSubscribe<R> {
     /**
      * 异步拦截器集合
      */
@@ -31,7 +33,7 @@ public class OperateorIntercept<T, R> implements React.OnSubscribe<R> {
     }
 
     @Override
-    public void call(SafeIoSubscriber<? super R> t) throws Exception {
+    public void call(IoSubscriber<? super R> t) throws Exception {
         Iterator<? extends React<? extends T>> iterator = sequences.iterator();
         // 拦截器为空则直接调用业务逻辑
         if (!iterator.hasNext()) {

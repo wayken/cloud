@@ -28,14 +28,14 @@ public class OperateorFlat<T> implements OnSubscribe<Boolean> {
     }
 
     @Override
-    public void call(SafeIoSubscriber<? super Boolean> t) throws Exception {
+    public void call(IoSubscriber<? super Boolean> t) throws Exception {
         Iterator<? extends React<? extends T>> iterator = sequences.iterator();
         FlatSubscriber<T> subscriber = new FlatSubscriber<T>(t, iterator, predicate);
         React<? extends T> source = iterator.next();
         source.subscribe(subscriber).start();
     }
 
-    private static class FlatSubscriber<T> implements IoSubscriber<T> {
+    private static class FlatSubscriber<T> extends IoSubscripberAdapter<T> {
         final IoSubscriber<? super Boolean> actual;
 
         final Iterator<? extends React<? extends T>> sequences;
@@ -81,13 +81,6 @@ public class OperateorFlat<T> implements OnSubscribe<Boolean> {
             } finally {
                 actual.onCompleted();
             }
-        }
-
-        /**
-         * 有可能外层会调用onComplete方法，先直接屏蔽，让组件自己触发onComplete逻辑
-         */
-        @Override
-        public void onCompleted() {
         }
     }
 }

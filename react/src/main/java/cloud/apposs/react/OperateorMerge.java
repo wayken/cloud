@@ -30,7 +30,7 @@ public class OperateorMerge<T> implements OnSubscribe<T> {
 	}
 
 	@Override
-	public void call(SafeIoSubscriber<? super T> t) throws Exception {
+	public void call(IoSubscriber<? super T> t) throws Exception {
 		MergeSubscriber<T> subscriber = new MergeSubscriber<T>(t, sequences.length);
 		for (int i = 0; i < sequences.length; i++) {
 			React<? extends T> react = sequences[i];
@@ -38,7 +38,7 @@ public class OperateorMerge<T> implements OnSubscribe<T> {
         }
 	}
 	
-	static final class MergeSubscriber<T> implements IoSubscriber<T> {
+	static final class MergeSubscriber<T> extends IoSubscripberAdapter<T> {
 		private final IoSubscriber<? super T> actual;
 		
 		private final int total;
@@ -75,14 +75,6 @@ public class OperateorMerge<T> implements OnSubscribe<T> {
 					actual.onCompleted();
 				}
 			}
-		}
-		
-		/**
-		 * 有可能外层会调用onComplete方法，
-		 * 所以Merge自己直接屏蔽，让Merge自己触发onComplete逻辑
-		 */
-		@Override
-		public void onCompleted() {
 		}
 	}
 }

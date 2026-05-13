@@ -1,12 +1,13 @@
 package cloud.apposs.react;
 
+import cloud.apposs.react.React.OnSubscribe;
 import cloud.apposs.util.Errno;
 import cloud.apposs.util.StandardResult;
 
 /**
  * 当响应式中有错误结果或者异常时的回滚操作
  */
-public class OnSubscribeRollback<T> implements React.OnSubscribe<StandardResult> {
+public class OnSubscribeRollback<T> implements OnSubscribe<StandardResult> {
     private final React<T> source;
 
     final IoFunction<StandardResult, StandardResult> rollback;
@@ -17,7 +18,7 @@ public class OnSubscribeRollback<T> implements React.OnSubscribe<StandardResult>
     }
 
     @Override
-    public void call(SafeIoSubscriber<? super StandardResult> subscriber) throws Exception {
+    public void call(IoSubscriber<? super StandardResult> subscriber) throws Exception {
         RollbackSubscriber<T> parent = new RollbackSubscriber<T>(subscriber, rollback);
         source.subscribe(parent).start();
     }

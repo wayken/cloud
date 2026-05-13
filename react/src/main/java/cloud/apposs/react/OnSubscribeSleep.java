@@ -22,7 +22,7 @@ public class OnSubscribeSleep<T> implements OnSubscribe<T> {
     }
 
     @Override
-    public void call(SafeIoSubscriber<? super T> t) throws Exception {
+    public void call(IoSubscriber<? super T> t) throws Exception {
         SleepSubscriber<T> subscriber = new SleepSubscriber<T>(t);
         source.subscribe(subscriber).start();
     }

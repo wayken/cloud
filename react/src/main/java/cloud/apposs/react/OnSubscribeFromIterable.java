@@ -1,11 +1,13 @@
 package cloud.apposs.react;
 
+import cloud.apposs.react.React.OnSubscribe;
+
 import java.util.Iterator;
 
 /**
  * 基于迭代器的数据发送器
  */
-public class OnSubscribeFromIterable<T> implements React.OnSubscribe<T> {
+public class OnSubscribeFromIterable<T> implements OnSubscribe<T> {
     private final Iterable<? extends T> iterable;
 
     public OnSubscribeFromIterable(Iterable<? extends T> iterable) {
@@ -13,7 +15,7 @@ public class OnSubscribeFromIterable<T> implements React.OnSubscribe<T> {
     }
 
     @Override
-    public void call(SafeIoSubscriber<? super T> t) throws Exception {
+    public void call(IoSubscriber<? super T> t) throws Exception {
         try {
             Iterator<? extends T> iterator = iterable.iterator();
             while (iterator.hasNext()) {

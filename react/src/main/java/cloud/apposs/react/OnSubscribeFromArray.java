@@ -1,9 +1,11 @@
 package cloud.apposs.react;
 
+import cloud.apposs.react.React.OnSubscribe;
+
 /**
  * 基于数组的数据发送器
  */
-public class OnSubscribeFromArray<T> implements React.OnSubscribe<T> {
+public class OnSubscribeFromArray<T> implements OnSubscribe<T> {
 	private final T[] array;
 
 	public OnSubscribeFromArray(T[] array) {
@@ -11,7 +13,7 @@ public class OnSubscribeFromArray<T> implements React.OnSubscribe<T> {
     }
 
 	@Override
-	public void call(SafeIoSubscriber<? super T> t) throws Exception {
+	public void call(IoSubscriber<? super T> t) throws Exception {
 	    try {
             for (int i = 0; i < array.length; i++) {
                 t.onNext(array[i]);

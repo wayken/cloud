@@ -13,7 +13,7 @@ public final class OnSubscribeRequest<T, R> implements OnSubscribe<R> {
     }
 	
 	@Override
-	public void call(final SafeIoSubscriber<? super R> t) throws Exception {
+	public void call(IoSubscriber<? super R> t) throws Exception {
 		RequestSubscriber<T, R> parent = new RequestSubscriber<T, R>(t, transformer);
         source.subscribe(parent).start();
 	}

@@ -1,8 +1,9 @@
 package cloud.apposs.react;
 
+import cloud.apposs.react.React.OnSubscribe;
 import cloud.apposs.util.Errno;
 
-public final class OnSubscribeMatch<T> implements React.OnSubscribe<T> {
+public final class OnSubscribeMatch<T> implements OnSubscribe<T> {
 	private final React<T> source;
 
 	final IoFunction<? super T, Errno> predicate;
@@ -13,7 +14,7 @@ public final class OnSubscribeMatch<T> implements React.OnSubscribe<T> {
     }
 	
 	@Override
-	public void call(SafeIoSubscriber<? super T> t) throws Exception {
+	public void call(IoSubscriber<? super T> t) throws Exception {
 		MatchSubscriber<T> parent = new MatchSubscriber<T>(t, predicate);
 		source.subscribe(parent).start();
 	}

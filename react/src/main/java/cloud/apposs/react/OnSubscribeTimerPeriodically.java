@@ -1,12 +1,14 @@
 package cloud.apposs.react;
 
+import cloud.apposs.react.React.OnSubscribe;
+
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
  * 响应式数据定时器，底层采用的是异步线程定时任务
  */
-public class OnSubscribeTimerPeriodically implements React.OnSubscribe<Long> {
+public class OnSubscribeTimerPeriodically implements OnSubscribe<Long> {
     final long initialDelay;
     final long period;
     final TimeUnit unit;
@@ -20,7 +22,7 @@ public class OnSubscribeTimerPeriodically implements React.OnSubscribe<Long> {
     }
 
     @Override
-    public void call(final SafeIoSubscriber<? super Long> child) {
+    public void call(IoSubscriber<? super Long> child) {
         scheduler.scheduleAtFixedRate(new Runnable() {
             long counter;
             @Override

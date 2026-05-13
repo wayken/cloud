@@ -18,7 +18,7 @@ public class OnSubscribeLoop<T> implements OnSubscribe<T> {
     }
 
     @Override
-    public void call(SafeIoSubscriber<? super T> t) throws Exception {
+    public void call(IoSubscriber<? super T> t) throws Exception {
         LoopSubscriber<T> parent = new LoopSubscriber<T>(t, handler);
         source.subscribe(parent).start();
     }

@@ -15,7 +15,7 @@ public class OperatorExecutOn<T> implements OnSubscribe<T> {
 	}
 	
 	@Override
-	public void call(final SafeIoSubscriber<? super T> t) throws Exception {
+	public void call(final IoSubscriber<? super T> t) throws Exception {
 		IoSubscriber<? super T> is = new ExecutorOnSubscriber<T>(t, executor);
 		parent.call(new SafeIoSubscriber<T>(is));
 	}

@@ -1,11 +1,12 @@
 package cloud.apposs.react;
 
+import cloud.apposs.react.React.OnSubscribe;
 import cloud.apposs.util.StandardResult;
 
 /**
  * 对数据进行加工处理，返回{@link StandardResult}，主要应用于业务微服务开发
  */
-public class OnSubscribeHandle<T> implements React.OnSubscribe<StandardResult> {
+public class OnSubscribeHandle<T> implements OnSubscribe<StandardResult> {
     private final React<T> source;
 
     private final IoFunction<? super T, StandardResult> predicate;
@@ -16,7 +17,7 @@ public class OnSubscribeHandle<T> implements React.OnSubscribe<StandardResult> {
     }
 
     @Override
-    public void call(SafeIoSubscriber<? super StandardResult> subscriber) throws Exception {
+    public void call(IoSubscriber<? super StandardResult> subscriber) throws Exception {
         StandardResultSubscriber<T> parent = new StandardResultSubscriber<T>(subscriber, predicate);
         source.subscribe(parent).start();
     }

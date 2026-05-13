@@ -18,7 +18,7 @@ public class OnSubscribeRetry<T> implements OnSubscribe<T> {
     }
 
     @Override
-    public void call(SafeIoSubscriber<? super T> t) throws Exception {
+    public void call(IoSubscriber<? super T> t) throws Exception {
         RetrySubscriber<T> parent = new RetrySubscriber<T>(t, handler);
         source.subscribe(parent).start();
     }

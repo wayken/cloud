@@ -23,7 +23,7 @@ public class OnSubscribeLock<T> implements OnSubscribe<T> {
     }
 
     @Override
-    public void call(final SafeIoSubscriber<? super T> subscriber) throws Exception {
+    public void call(final IoSubscriber<? super T> subscriber) throws Exception {
         actor.lock(key, new ActorTask() {
             @Override
             public ActorLock getLockKey() {

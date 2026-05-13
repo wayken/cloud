@@ -20,7 +20,7 @@ public class OnSubscribeRepeat<T> implements OnSubscribe<T> {
     }
 
     @Override
-    public void call(SafeIoSubscriber<? super T> t) throws Exception {
+    public void call(IoSubscriber<? super T> t) throws Exception {
         RepeatSubscriber<T> subscriber = new RepeatSubscriber<T>(t);
         source.subscribe(subscriber).start();
     }

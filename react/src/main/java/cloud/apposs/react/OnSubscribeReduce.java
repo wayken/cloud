@@ -15,7 +15,7 @@ public final class OnSubscribeReduce<T> implements OnSubscribe<T> {
     }
 
     @Override
-    public void call(SafeIoSubscriber<? super T> t) throws Exception {
+    public void call(IoSubscriber<? super T> t) throws Exception {
         ReduceSubscriber<T> parent = new ReduceSubscriber<T>(t, reducer);
         source.subscribe(parent).start();
     }

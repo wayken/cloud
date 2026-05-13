@@ -13,8 +13,8 @@ public final class OnSubscribeMap<T, R> implements OnSubscribe<R> {
     }
 	
 	@Override
-	public void call(final SafeIoSubscriber<? super R> t) throws Exception {
-		MapSubscriber<T, R> parent = new MapSubscriber<T, R>(t, transformer);
+	public void call(final IoSubscriber<? super R> t) throws Exception {
+        MapSubscriber<T, R> parent = new MapSubscriber<T, R>(t, transformer);
         source.subscribe(parent).start();
 	}
 	

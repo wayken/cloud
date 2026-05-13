@@ -2,7 +2,7 @@ package cloud.apposs.okhttp.netty;
 
 import cloud.apposs.okhttp.*;
 import cloud.apposs.okhttp.pool.ReactIoConnection;
-import cloud.apposs.react.SafeIoSubscriber;
+import cloud.apposs.react.IoSubscriber;
 import cloud.apposs.util.CharsetUtil;
 import cloud.apposs.util.Param;
 import io.netty.buffer.ByteBuf;
@@ -22,7 +22,7 @@ public final class NettyUtil {
      *     1. 如果是首次从连接池中获取连接则会调用
      *     2. 如果连接池中已经建立了连接则在触发响应式请求时会调用
      * </pre>
-     * 详见{@link NettyIoConnection#call(SafeIoSubscriber)}
+     * 详见{@link NettyIoConnection#call(IoSubscriber)}
      */
     public static void sendRequest(ReactIoConnection connection, ChannelHandlerContext context) throws Exception {
         // 封装HTTP请求参数

@@ -16,7 +16,7 @@ public final class OnSubscribeFilter<T> implements OnSubscribe<T> {
     }
 	
 	@Override
-	public void call(SafeIoSubscriber<? super T> t) throws Exception {
+	public void call(IoSubscriber<? super T> t) throws Exception {
 		FilterSubscriber<T> parent = new FilterSubscriber<T>(t, predicate);
 		source.subscribe(parent).start();
 	}

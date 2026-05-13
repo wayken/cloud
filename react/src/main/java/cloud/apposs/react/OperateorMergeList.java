@@ -35,7 +35,7 @@ public class OperateorMergeList<T> implements OnSubscribe<List<T>> {
     }
 
     @Override
-    public void call(SafeIoSubscriber<? super List<T>> t) throws Exception {
+    public void call(IoSubscriber<? super List<T>> t) throws Exception {
         MergeListSubscriber<T> subscriber = new MergeListSubscriber<T>(t, sequences.length, skipError);
         for (int i = 0; i < sequences.length; i++) {
             React<? extends T> react = sequences[i];
@@ -54,7 +54,7 @@ public class OperateorMergeList<T> implements OnSubscribe<List<T>> {
 
         private final boolean skipError;
 
-        public MergeListSubscriber(SafeIoSubscriber<? super List<T>> t, int total, boolean skipError) {
+        public MergeListSubscriber(IoSubscriber<? super List<T>> t, int total, boolean skipError) {
             this.actual = t;
             this.total = total;
             this.index = new AtomicInteger(0);

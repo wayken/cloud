@@ -6,7 +6,7 @@ import cloud.apposs.okhttp.OkResponse;
 import cloud.apposs.okhttp.RemoteSocketAddress;
 import cloud.apposs.okhttp.pool.AbstractReactIoConnection;
 import cloud.apposs.okhttp.pool.IPooledConnection;
-import cloud.apposs.react.SafeIoSubscriber;
+import cloud.apposs.react.IoSubscriber;
 import cloud.apposs.util.Proxy;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelHandlerContext;
@@ -52,7 +52,7 @@ public class NettyIoConnection extends AbstractReactIoConnection {
     }
 
     @Override
-    public void call(SafeIoSubscriber<? super OkResponse> t) throws Exception {
+    public void call(IoSubscriber<? super OkResponse> t) throws Exception {
         IoConnectionSubscriber subscriber = new IoConnectionSubscriber(t, this);
         request.setAttribute(CONTEXT_SUBSCRIBE, subscriber);
 

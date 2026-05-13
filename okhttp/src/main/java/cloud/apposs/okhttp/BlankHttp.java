@@ -1,9 +1,9 @@
 package cloud.apposs.okhttp;
 
 import cloud.apposs.react.IoFunction;
+import cloud.apposs.react.IoSubscriber;
 import cloud.apposs.react.OnSubscribeHandle;
 import cloud.apposs.react.React;
-import cloud.apposs.react.SafeIoSubscriber;
 import cloud.apposs.util.CachedFileStream;
 import cloud.apposs.util.StandardResult;
 
@@ -24,7 +24,7 @@ public class BlankHttp {
     public static React<OkResponse> execute(int status, StandardResult result) throws Exception {
         return React.create(new React.OnSubscribe<OkResponse>() {
             @Override
-            public void call(SafeIoSubscriber<? super OkResponse> subscriber) throws Exception {
+            public void call(IoSubscriber<? super OkResponse> subscriber) throws Exception {
                 OkResponse response = new RxResponse(status, result);
                 subscriber.onNext(response);
             }
@@ -42,7 +42,7 @@ public class BlankHttp {
     public static React<List<OkResponse>> executeBatch(StandardResult result) throws Exception {
         return React.create(new React.OnSubscribe<List<OkResponse>>() {
             @Override
-            public void call(SafeIoSubscriber<? super List<OkResponse>> safeIoSubscriber) throws Exception {
+            public void call(IoSubscriber<? super List<OkResponse>> safeIoSubscriber) throws Exception {
                 List<OkResponse> response = new RxResponseList(result);
                 safeIoSubscriber.onNext(response);
             }
