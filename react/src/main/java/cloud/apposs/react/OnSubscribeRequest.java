@@ -13,36 +13,31 @@ public final class OnSubscribeRequest<T, R> implements OnSubscribe<R> {
     }
 	
 	@Override
-	public void call(IoSubscriber<? super R> t) throws Exception {
-		RequestSubscriber<T, R> parent = new RequestSubscriber<T, R>(t, transformer);
+	public void call(IoSubscriber<? super R> subscriber) throws Exception {
+		RequestSubscriber<T, R> parent = new RequestSubscriber<T, R>(subscriber, transformer);
+        subscriber.add(parent);
         source.subscribe(parent).start();
 	}
 	
-	static final class RequestSubscriber<T, R> implements IoSubscriber<T> {
-        private final IoSubscriber<? super R> actual;
+	private static final class RequestSubscriber<T, R> extends IoSubscriber<T> {
+        private final IoSubscriber<? super R> subscriber;
 
         private final IoFunction<? super T, ? extends React<? extends R>> mapper;
 
-        public RequestSubscriber(IoSubscriber<? super R> actual,
+        public RequestSubscriber(IoSubscriber<? super R> subscriber,
         		IoFunction<? super T, ? extends React<? extends R>> transformer) {
-            this.actual = actual;
+            super(subscriber);
+            this.subscriber = subscriber;
             this.mapper = transformer;
         }
 
         @Override
         public void onNext(T t) throws Exception {
             React<? extends R> result = mapper.call(t);
-        	result.subscribe(actual).start();
-        }
-
-        @Override
-        public void onError(Throwable e) {
-            actual.onError(e);
-            actual.onCompleted();
-        }
-
-        @Override
-        public void onCompleted() {
+            if (subscriber.isUnsubscribed()) {
+                return;
+            }
+        	result.subscribe(subscriber).start();
         }
     }
 }

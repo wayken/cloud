@@ -16,18 +16,17 @@ public final class OnSubscribeFilter<T> implements OnSubscribe<T> {
     }
 	
 	@Override
-	public void call(IoSubscriber<? super T> t) throws Exception {
-		FilterSubscriber<T> parent = new FilterSubscriber<T>(t, predicate);
+	public void call(IoSubscriber<? super T> subscriber) throws Exception {
+		FilterSubscriber<T> parent = new FilterSubscriber<T>(subscriber, predicate);
+        subscriber.add(parent);
 		source.subscribe(parent).start();
 	}
 	
-	static final class FilterSubscriber<T> implements IoSubscriber<T> {
-        final IoSubscriber<? super T> actual;
+	private static final class FilterSubscriber<T> extends SafeIoSubscriber<T> {
+        private final IoFunction<? super T, Boolean> predicate;
 
-        final IoFunction<? super T, Boolean> predicate;
-
-        public FilterSubscriber(IoSubscriber<? super T> actual, IoFunction<? super T, Boolean> predicate) {
-            this.actual = actual;
+        public FilterSubscriber(IoSubscriber<? super T> subscriber, IoFunction<? super T, Boolean> predicate) {
+            super(subscriber);
             this.predicate = predicate;
         }
 
@@ -35,18 +34,8 @@ public final class OnSubscribeFilter<T> implements OnSubscribe<T> {
         public void onNext(T t) throws Exception {
             boolean result = predicate.call(t);
             if (result) {
-                actual.onNext(t);
+                subscriber.onNext(t);
             }
-        }
-
-        @Override
-        public void onError(Throwable e) {
-            actual.onError(e);
-        }
-
-        @Override
-        public void onCompleted() {
-            actual.onCompleted();
         }
     }
 }

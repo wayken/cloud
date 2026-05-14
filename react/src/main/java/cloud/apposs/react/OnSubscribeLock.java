@@ -35,6 +35,7 @@ public class OnSubscribeLock<T> implements OnSubscribe<T> {
                 LockSubscriber<T> lockSubscriber = null;
                 try {
                     lockSubscriber = new LockSubscriber<>(subscriber, key);
+                    subscriber.add(lockSubscriber);
                     subscribe.call(lockSubscriber);
                 } catch (Throwable t) {
                     lockSubscriber.onError(t);
@@ -46,18 +47,21 @@ public class OnSubscribeLock<T> implements OnSubscribe<T> {
     /**
      * 对Subscriber进行再包装，保证当所有数据流处理结束时自动释放锁
      */
-    static final class LockSubscriber<T> extends SafeIoSubscriber<T> {
+    private static final class LockSubscriber<T> extends SafeIoSubscriber<T> {
         private final ActorLock key;
 
-        public LockSubscriber(IoSubscriber<? super T> actual, ActorLock key) {
-            super(actual);
+        public LockSubscriber(IoSubscriber<? super T> subscriber, ActorLock key) {
+            super(subscriber);
             this.key = key;
         }
 
         @Override
         public void onNext(T t) throws Exception {
             try {
-                actual.onNext(t);
+                if (subscriber.isUnsubscribed()) {
+                    return;
+                }
+                subscriber.onNext(t);
             } finally {
                 key.unlock();
             }
@@ -66,7 +70,7 @@ public class OnSubscribeLock<T> implements OnSubscribe<T> {
         @Override
         public void onError(Throwable e) {
             try {
-                actual.onError(e);
+                subscriber.onError(e);
             } finally {
                 key.unlock();
             }
@@ -74,7 +78,7 @@ public class OnSubscribeLock<T> implements OnSubscribe<T> {
 
         @Override
         public void onCompleted() {
-            actual.onCompleted();
+            subscriber.onCompleted();
         }
     }
 }

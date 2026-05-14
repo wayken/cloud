@@ -33,21 +33,22 @@ public class OperateorIntercept<T, R> implements OnSubscribe<R> {
     }
 
     @Override
-    public void call(IoSubscriber<? super R> t) throws Exception {
+    public void call(IoSubscriber<? super R> subscriber) throws Exception {
         Iterator<? extends React<? extends T>> iterator = sequences.iterator();
         // 拦截器为空则直接调用业务逻辑
         if (!iterator.hasNext()) {
             React<? extends R> source = emitter.call();
-            source.subscribe(t).start();
+            source.subscribe(subscriber).start();
             return;
         }
-        InterceptSubscriber<T, R> subscriber = new InterceptSubscriber<T, R>(t, iterator, predicate, emitter);
+        InterceptSubscriber<T, R> parent = new InterceptSubscriber<T, R>(subscriber, iterator, predicate, emitter);
+        subscriber.add(parent);
         React<? extends T> source = iterator.next();
-        source.subscribe(subscriber).start();
+        source.subscribe(parent).start();
     }
 
-    private static class InterceptSubscriber<T, R> implements IoSubscriber<T> {
-        private final IoSubscriber<? super R> actual;
+    private static class InterceptSubscriber<T, R> extends IoSubscriber<T> {
+        private final IoSubscriber<? super R> subscriber;
 
         private final Iterator<? extends React<? extends T>> sequences;
 
@@ -55,9 +56,10 @@ public class OperateorIntercept<T, R> implements OnSubscribe<R> {
 
         private final IoEmitter<React<? extends R>> emitter;
 
-        private InterceptSubscriber(IoSubscriber<? super R> actual, Iterator<? extends React<? extends T>> sequences,
+        private InterceptSubscriber(IoSubscriber<? super R> subscriber, Iterator<? extends React<? extends T>> sequences,
                     IoFunction<? super T, IResult> predicate, IoEmitter<React<? extends R>> emitter) {
-            this.actual = actual;
+            super(subscriber);
+            this.subscriber = subscriber;
             this.sequences = sequences;
             this.predicate = predicate;
             this.emitter = emitter;
@@ -65,6 +67,9 @@ public class OperateorIntercept<T, R> implements OnSubscribe<R> {
 
         @Override
         public void onNext(T value) throws Exception {
+            if (subscriber.isUnsubscribed()) {
+                return;
+            }
             // 若判断不符合拦截需求，返回false，不执行接下来的拦截器列表和业务逻辑
             IResult result = predicate.call(value);
             if (result.success) {
@@ -76,7 +81,7 @@ public class OperateorIntercept<T, R> implements OnSubscribe<R> {
                     // 全部拦截器都通过，调用业务逻辑
                     try {
                         React<? extends R> source = emitter.call();
-                        source.subscribe(actual).start();
+                        source.subscribe(subscriber).start();
                     } catch (Exception e) {
                         this.onError(e);
                     }
@@ -87,16 +92,6 @@ public class OperateorIntercept<T, R> implements OnSubscribe<R> {
                     this.onError(cause);
                 }
             }
-        }
-
-        @Override
-        public void onError(Throwable cause) {
-            actual.onError(cause);
-        }
-
-        @Override
-        public void onCompleted() {
-            actual.onCompleted();
         }
     }
 

@@ -22,15 +22,18 @@ public class OnSubscribeTimerPeriodically implements OnSubscribe<Long> {
     }
 
     @Override
-    public void call(IoSubscriber<? super Long> child) {
+    public void call(IoSubscriber<? super Long> subscriber) {
         scheduler.scheduleAtFixedRate(new Runnable() {
             long counter;
             @Override
             public void run() {
                 try {
-                    child.onNext(counter++);
+                    if (subscriber.isUnsubscribed()) {
+                        return;
+                    }
+                    subscriber.onNext(counter++);
                 } catch (Throwable t) {
-                    child.onError(t);
+                    subscriber.onError(t);
                 }
             }
         }, initialDelay, period, unit);

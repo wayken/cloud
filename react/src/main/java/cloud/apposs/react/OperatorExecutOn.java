@@ -15,18 +15,17 @@ public class OperatorExecutOn<T> implements OnSubscribe<T> {
 	}
 	
 	@Override
-	public void call(final IoSubscriber<? super T> t) throws Exception {
-		IoSubscriber<? super T> is = new ExecutorOnSubscriber<T>(t, executor);
+	public void call(final IoSubscriber<? super T> subscriber) throws Exception {
+		IoSubscriber<? super T> is = new ExecutorOnSubscriber<T>(subscriber, executor);
+		subscriber.add(is);
 		parent.call(new SafeIoSubscriber<T>(is));
 	}
 	
-	static final class ExecutorOnSubscriber<T> implements IoSubscriber<T> {
-		private final IoSubscriber<? super T> child;
-		
+	private static final class ExecutorOnSubscriber<T> extends SafeIoSubscriber<T> {
 		private final Executor executor;
 		
-		public ExecutorOnSubscriber(IoSubscriber<? super T> child, Executor executor) {
-			this.child = child;
+		public ExecutorOnSubscriber(IoSubscriber<? super T> subscriber, Executor executor) {
+			super(subscriber);
 			this.executor = executor;
 		}
 		
@@ -36,9 +35,9 @@ public class OperatorExecutOn<T> implements OnSubscribe<T> {
     			@Override
     			public void run() {
     				try {
-						child.onNext(value);
+						subscriber.onNext(value);
 					} catch (Exception e) {
-						child.onError(e);
+						subscriber.onError(e);
 					}
     			}
     		});
@@ -46,22 +45,16 @@ public class OperatorExecutOn<T> implements OnSubscribe<T> {
 
 		@Override
 		public void onCompleted() {
-			executor.execute(new Runnable() {
-    			@Override
-    			public void run() {
-					child.onCompleted();
-    			}
-    		});
+			executor.execute(() -> {
+				subscriber.onCompleted();
+			});
 		}
 
 		@Override
 		public void onError(final Throwable t) {
-			executor.execute(new Runnable() {
-    			@Override
-    			public void run() {
-					child.onError(t);
-    			}
-    		});
+			executor.execute(() -> {
+				subscriber.onError(t);
+			});
 		}
 	}
 }

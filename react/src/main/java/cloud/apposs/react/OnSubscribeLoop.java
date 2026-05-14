@@ -18,18 +18,17 @@ public class OnSubscribeLoop<T> implements OnSubscribe<T> {
     }
 
     @Override
-    public void call(IoSubscriber<? super T> t) throws Exception {
-        LoopSubscriber<T> parent = new LoopSubscriber<T>(t, handler);
+    public void call(IoSubscriber<? super T> subscriber) throws Exception {
+        LoopSubscriber<T> parent = new LoopSubscriber<T>(subscriber, handler);
+        subscriber.add(parent);
         source.subscribe(parent).start();
     }
 
-    static class LoopSubscriber<T> implements IoSubscriber<T> {
-        private final IoSubscriber<? super T> actual;
-
+    private static class LoopSubscriber<T> extends SafeIoSubscriber<T> {
         private final IoFunction<T, ? extends React<T>> handler;
 
-        LoopSubscriber(IoSubscriber<? super T> actual, IoFunction<T, ? extends React<T>> handler) {
-            this.actual = actual;
+        LoopSubscriber(IoSubscriber<? super T> subscriber, IoFunction<T, ? extends React<T>> handler) {
+            super(subscriber);
             this.handler = handler;
         }
 
@@ -40,24 +39,15 @@ public class OnSubscribeLoop<T> implements OnSubscribe<T> {
                 React<T> next = handler.call(value);
                 if (next == null) {
                     // 返回null，终止循环，将当前值传递给下游并完成
-                    actual.onNext(value);
+                    subscriber.onNext(value);
+                    subscriber.onCompleted();
                 } else {
                     // 返回新的React，继续下一轮循环
                     next.subscribe(this).start();
                 }
             } catch (Exception e) {
-                actual.onError(e);
+                subscriber.onError(e);
             }
-        }
-
-        @Override
-        public void onCompleted() {
-            actual.onCompleted();
-        }
-
-        @Override
-        public void onError(Throwable cause) {
-            actual.onError(cause);
         }
     }
 }

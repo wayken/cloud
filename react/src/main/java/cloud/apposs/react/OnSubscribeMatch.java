@@ -14,12 +14,13 @@ public final class OnSubscribeMatch<T> implements OnSubscribe<T> {
     }
 	
 	@Override
-	public void call(IoSubscriber<? super T> t) throws Exception {
-		MatchSubscriber<T> parent = new MatchSubscriber<T>(t, predicate);
+	public void call(IoSubscriber<? super T> subscriber) throws Exception {
+		MatchSubscriber<T> parent = new MatchSubscriber<T>(subscriber, predicate);
+		subscriber.add(parent);
 		source.subscribe(parent).start();
 	}
 	
-	static final class MatchException extends Exception {
+	public static final class MatchException extends Exception {
 		private static final long serialVersionUID = -8099544492758850343L;
 
 		private Errno errno;
@@ -28,8 +29,8 @@ public final class OnSubscribeMatch<T> implements OnSubscribe<T> {
 			this.errno = errno;
 		}
 		
-		public MatchException(String msg, Errno errno) {
-			super(msg);
+		public MatchException(String message, Errno errno) {
+			super(message);
 			this.errno = errno;
 		}
 		
@@ -38,13 +39,11 @@ public final class OnSubscribeMatch<T> implements OnSubscribe<T> {
 		}
 	}
 	
-	static final class MatchSubscriber<T> implements IoSubscriber<T> {
-        final IoSubscriber<? super T> actual;
+	private static final class MatchSubscriber<T> extends SafeIoSubscriber<T> {
+        private final IoFunction<? super T, Errno> predicate;
 
-        final IoFunction<? super T, Errno> predicate;
-
-        public MatchSubscriber(IoSubscriber<? super T> actual, IoFunction<? super T, Errno> predicate) {
-            this.actual = actual;
+        public MatchSubscriber(IoSubscriber<? super T> subscriber, IoFunction<? super T, Errno> predicate) {
+            super(subscriber);
             this.predicate = predicate;
         }
 
@@ -52,20 +51,10 @@ public final class OnSubscribeMatch<T> implements OnSubscribe<T> {
         public void onNext(T t) throws Exception {
             Errno result = predicate.call(t);
             if (result == Errno.OK) {
-            	actual.onNext(t);
+            	subscriber.onNext(t);
             } else {
-            	actual.onError(new MatchException(result));
+            	subscriber.onError(new MatchException(result));
             }
-        }
-
-        @Override
-        public void onError(Throwable e) {
-            actual.onError(e);
-        }
-
-        @Override
-        public void onCompleted() {
-            actual.onCompleted();
         }
     }
 }

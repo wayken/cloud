@@ -10,9 +10,12 @@ public class OnSubscribeEmitter<T> implements OnSubscribe<T> {
     }
 
     @Override
-    public void call(IoSubscriber<? super T> t) throws Exception {
+    public void call(IoSubscriber<? super T> subscriber) throws Exception {
         T value = transformer.call();
-        t.onNext(value);
-        t.onCompleted();
+        if (subscriber.isUnsubscribed()) {
+            return;
+        }
+        subscriber.onNext(value);
+        subscriber.onCompleted();
     }
 }

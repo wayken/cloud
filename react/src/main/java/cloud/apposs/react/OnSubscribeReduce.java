@@ -15,15 +15,14 @@ public final class OnSubscribeReduce<T> implements OnSubscribe<T> {
     }
 
     @Override
-    public void call(IoSubscriber<? super T> t) throws Exception {
-        ReduceSubscriber<T> parent = new ReduceSubscriber<T>(t, reducer);
+    public void call(IoSubscriber<? super T> subscriber) throws Exception {
+        ReduceSubscriber<T> parent = new ReduceSubscriber<T>(subscriber, reducer);
+        subscriber.add(parent);
         source.subscribe(parent).start();
     }
 
-    static final class ReduceSubscriber<T> implements IoSubscriber<T> {
+    private static final class ReduceSubscriber<T> extends SafeIoSubscriber<T> {
         private static final Object EMPTY = new Object();
-
-        private final IoSubscriber<? super T> actual;
 
         private final IoReduce<T, T, T> reducer;
 
@@ -32,8 +31,8 @@ public final class OnSubscribeReduce<T> implements OnSubscribe<T> {
         private boolean done;
 
         @SuppressWarnings("unchecked")
-        ReduceSubscriber(IoSubscriber<? super T> actual, IoReduce<T, T, T> reducer) {
-            this.actual = actual;
+        ReduceSubscriber(IoSubscriber<? super T> subscriber, IoReduce<T, T, T> reducer) {
+            super(subscriber);
             this.reducer = reducer;
             this.value = (T) EMPTY;
         }
@@ -62,13 +61,13 @@ public final class OnSubscribeReduce<T> implements OnSubscribe<T> {
             Object o = this.value;
             if (o != EMPTY) {
                 try {
-                    actual.onNext((T)o);
-                    actual.onCompleted();
+                    subscriber.onNext((T)o);
+                    subscriber.onCompleted();
                 } catch (Exception e) {
-                    actual.onError(e);
+                    subscriber.onError(e);
                 }
             } else {
-                actual.onError(new NoSuchElementException());
+                subscriber.onError(new NoSuchElementException());
             }
         }
 
@@ -76,7 +75,7 @@ public final class OnSubscribeReduce<T> implements OnSubscribe<T> {
         public void onError(Throwable cause) {
             if (!done) {
                 done = true;
-                actual.onError(cause);
+                subscriber.onError(cause);
             }
         }
     }

@@ -15,12 +15,12 @@ public class OperatorSubscribeOn<T> implements OnSubscribe<T> {
 	}
 	
 	@Override
-	public void call(final IoSubscriber<? super T> t) throws Exception {
-		executor.execute(new Runnable() {
-			@Override
-			public void run() {
-				source.subscribe(t).start();
+	public void call(IoSubscriber<? super T> subscriber) throws Exception {
+		executor.execute(() -> {
+			if (subscriber.isUnsubscribed()) {
+				return;
 			}
+			source.subscribe(subscriber).start();
 		});
 	}
 }

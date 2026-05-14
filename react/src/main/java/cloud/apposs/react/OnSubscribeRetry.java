@@ -18,14 +18,13 @@ public class OnSubscribeRetry<T> implements OnSubscribe<T> {
     }
 
     @Override
-    public void call(IoSubscriber<? super T> t) throws Exception {
-        RetrySubscriber<T> parent = new RetrySubscriber<T>(t, handler);
+    public void call(IoSubscriber<? super T> subscriber) throws Exception {
+        RetrySubscriber<T> parent = new RetrySubscriber<T>(subscriber, handler);
+        subscriber.add(parent);
         source.subscribe(parent).start();
     }
 
-    static class RetrySubscriber<T> implements IoSubscriber<T> {
-        private final IoSubscriber<? super T> actual;
-
+    private static class RetrySubscriber<T> extends SafeIoSubscriber<T> {
         private final IoFunction<Throwable, ? extends React<T>> handler;
 
         /**
@@ -33,8 +32,8 @@ public class OnSubscribeRetry<T> implements OnSubscribe<T> {
          */
         private boolean success = false;
 
-        RetrySubscriber(IoSubscriber<? super T> actual, IoFunction<Throwable, ? extends React<T>> handler) {
-            this.actual = actual;
+        RetrySubscriber(IoSubscriber<? super T> subscriber, IoFunction<Throwable, ? extends React<T>> handler) {
+            super(subscriber);
             this.handler = handler;
         }
 
@@ -43,19 +42,14 @@ public class OnSubscribeRetry<T> implements OnSubscribe<T> {
             // 进入此逻辑则代表当前OnSubscribeRetry封装的数据流是正常的，标记为成功，
             // 其他任务业务抛出的异常均不做重试处理，避免当前数据流本身正常又不断重试
             success = true;
-            actual.onNext(value);
-        }
-
-        @Override
-        public void onCompleted() {
-            actual.onCompleted();
+            subscriber.onNext(value);
         }
 
         @Override
         public void onError(Throwable cause) {
             if (success) {
                 // 当前数据流响应是正常的，不需要重试，直接调用下一个OnSubscribe进行错误处理即可
-                actual.onError(cause);
+                subscriber.onError(cause);
                 return;
             }
             try {
@@ -63,12 +57,13 @@ public class OnSubscribeRetry<T> implements OnSubscribe<T> {
                 React<T> source = handler.call(cause);
                 if (source == null) {
                     // 返回为空，代表实现类在重试方法判断超过一定次数返回后null，不再重试了
-                    actual.onError(cause);
+                    subscriber.onError(cause);
                 } else {
                     // 出错继续触发数据响应重试
                     source.subscribe(this).start();
                 }
-            } catch (Exception ignore) {
+            } catch (Exception e) {
+                subscriber.onError(e);
             }
         }
     }

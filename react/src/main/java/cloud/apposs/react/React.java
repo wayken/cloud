@@ -380,11 +380,12 @@ public class React<T> {
      *
      * @return 供调用方在任意时刻取消订阅的 Disposable 对象
      */
-    public void start() {
+    public IoSubscription start() {
         try {
             onSubscribe.call(subscriber);
         } catch (Throwable t) {
             subscriber.onError(t);
         }
+        return subscriber;
     }
 }

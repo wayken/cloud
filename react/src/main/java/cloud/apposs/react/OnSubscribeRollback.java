@@ -20,17 +20,18 @@ public class OnSubscribeRollback<T> implements OnSubscribe<StandardResult> {
     @Override
     public void call(IoSubscriber<? super StandardResult> subscriber) throws Exception {
         RollbackSubscriber<T> parent = new RollbackSubscriber<T>(subscriber, rollback);
+        subscriber.add(parent);
         source.subscribe(parent).start();
     }
 
-    static final class RollbackSubscriber<T> implements IoSubscriber<T> {
-        final IoSubscriber<? super StandardResult> actual;
+    private static final class RollbackSubscriber<T> extends IoSubscriber<T> {
+        private final IoSubscriber<? super StandardResult> subscriber;
 
         final IoFunction<StandardResult, StandardResult> rollback;
 
-        public RollbackSubscriber(IoSubscriber<? super StandardResult> actual,
-                                  IoFunction<StandardResult, StandardResult> rollback) {
-            this.actual = actual;
+        public RollbackSubscriber(IoSubscriber<? super StandardResult> subscriber, IoFunction<StandardResult, StandardResult> rollback) {
+            super(subscriber);
+            this.subscriber = subscriber;
             this.rollback = rollback;
         }
 
@@ -40,19 +41,14 @@ public class OnSubscribeRollback<T> implements OnSubscribe<StandardResult> {
                 StandardResult result = (StandardResult) value;
                 if (result.isError()) {
                     // 将处理结果为失败时调用回滚操作
-                    actual.onNext(rollback.call(result));
+                    subscriber.onNext(rollback.call(result));
                 } else {
-                    actual.onNext(result);
+                    subscriber.onNext(result);
                 }
             } else {
                 // 非StandardResult则进行包装再传递
-                actual.onNext(StandardResult.success(value));
+                subscriber.onNext(StandardResult.success(value));
             }
-        }
-
-        @Override
-        public void onCompleted() {
-            actual.onCompleted();
         }
 
         @Override
@@ -60,9 +56,9 @@ public class OnSubscribeRollback<T> implements OnSubscribe<StandardResult> {
             try {
                 // 异常也作为错误结果处理
                 StandardResult result = StandardResult.error(Errno.ERROR, cause);
-                actual.onNext(rollback.call(result));
+                subscriber.onNext(rollback.call(result));
             } catch (Exception e) {
-                actual.onError(e);
+                subscriber.onError(e);
             }
         }
     }

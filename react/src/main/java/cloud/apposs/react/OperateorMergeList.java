@@ -35,16 +35,20 @@ public class OperateorMergeList<T> implements OnSubscribe<List<T>> {
     }
 
     @Override
-    public void call(IoSubscriber<? super List<T>> t) throws Exception {
-        MergeListSubscriber<T> subscriber = new MergeListSubscriber<T>(t, sequences.length, skipError);
+    public void call(IoSubscriber<? super List<T>> subscriber) throws Exception {
+        MergeListSubscriber<T> parent = new MergeListSubscriber<T>(subscriber, sequences.length, skipError);
+        subscriber.add(parent);
         for (int i = 0; i < sequences.length; i++) {
             React<? extends T> react = sequences[i];
-            react.subscribe(subscriber).start();
+            if (subscriber.isUnsubscribed()) {
+                return;
+            }
+            react.subscribe(parent).start();
         }
     }
 
-    static final class MergeListSubscriber<T> implements IoSubscriber<T> {
-        private final IoSubscriber<? super List<T>> actual;
+    private static final class MergeListSubscriber<T> extends IoSubscriber<T> {
+        private final IoSubscriber<? super List<T>> subscriber;
 
         private final int total;
 
@@ -54,8 +58,9 @@ public class OperateorMergeList<T> implements OnSubscribe<List<T>> {
 
         private final boolean skipError;
 
-        public MergeListSubscriber(IoSubscriber<? super List<T>> t, int total, boolean skipError) {
-            this.actual = t;
+        public MergeListSubscriber(IoSubscriber<? super List<T>> subscriber, int total, boolean skipError) {
+            super(subscriber);
+            this.subscriber = subscriber;
             this.total = total;
             this.index = new AtomicInteger(0);
             this.valueList = new CopyOnWriteArrayList<T>();
@@ -71,18 +76,18 @@ public class OperateorMergeList<T> implements OnSubscribe<List<T>> {
                 // 因为后者会导致多个异步请求结束后因为先触发index.incrementAndGet()会递增，
                 // 如果刚好多个请求都在同一时间递增了，那么在下一步index.get() >= total发现都满足条件了，会导致多次onNext触发
                 if (index.incrementAndGet() >= total) {
-                    actual.onNext(valueList);
-                    actual.onCompleted();
+                    subscriber.onNext(valueList);
+                    subscriber.onCompleted();
                 }
             } catch (Throwable t) {
-                actual.onError(t);
+                subscriber.onError(t);
             }
         }
 
         @Override
         public void onCompleted() {
             if (index.get() >= total) {
-                actual.onCompleted();
+                subscriber.onCompleted();
             }
         }
 
@@ -90,13 +95,13 @@ public class OperateorMergeList<T> implements OnSubscribe<List<T>> {
         public void onError(Throwable t) {
             try {
                 if (!skipError) {
-                    actual.onError(t);
+                    subscriber.onError(t);
                 } else if (index.incrementAndGet() >= total) {
-                    actual.onNext(valueList);
-                    actual.onCompleted();
+                    subscriber.onNext(valueList);
+                    subscriber.onCompleted();
                 }
             } catch (Throwable e) {
-                actual.onError(t);
+                subscriber.onError(t);
             }
         }
     }

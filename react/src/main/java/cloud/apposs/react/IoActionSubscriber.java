@@ -1,6 +1,6 @@
 package cloud.apposs.react;
 
-public final class IoActionSubscriber<T> implements IoSubscriber<T> {
+public final class IoActionSubscriber<T> extends IoSubscriber<T> {
 	public static final IoAction<Void> EMPTY_ACTION = new EmptyAction();
 	public static final IoAction<Throwable> UNSUPPORTED_ACTION = new UnSupportedAction();
 	

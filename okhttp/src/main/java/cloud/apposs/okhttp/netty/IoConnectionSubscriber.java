@@ -9,18 +9,23 @@ import cloud.apposs.react.IoSubscriber;
 /**
  * HTTP请求数据处理器，封装请求参数，每次请求都是一个新的处理器
  */
-public class IoConnectionSubscriber implements IoSubscriber<OkResponse> {
-    private final IoSubscriber<? super OkResponse> actual;
+public class IoConnectionSubscriber extends IoSubscriber<OkResponse> {
+    private final IoSubscriber<? super OkResponse> subscriber;
 
     private final NettyIoConnection connection;
 
-    public IoConnectionSubscriber(IoSubscriber<? super OkResponse> actual, NettyIoConnection connection) {
-        this.actual = actual;
+    public IoConnectionSubscriber(IoSubscriber<? super OkResponse> subscriber, NettyIoConnection connection) {
+        super(subscriber);
+        this.subscriber = subscriber;
         this.connection = connection;
     }
 
     @Override
     public void onNext(OkResponse value) throws Exception {
+        // 请求已经被取消了，不需要继续处理了
+        if (isUnsubscribed()) {
+            return;
+        }
         // 在获取到所有响应数据后，如果是在连接池的则进行回收
         if (value.isCompleted()) {
             final IPooledConnection pool = connection.getPool();
@@ -28,12 +33,7 @@ public class IoConnectionSubscriber implements IoSubscriber<OkResponse> {
                 pool.release(connection);
             }
         }
-        actual.onNext(value);
-    }
-
-    @Override
-    public void onCompleted() {
-        actual.onCompleted();
+        subscriber.onNext(value);
     }
 
     @Override
@@ -42,7 +42,7 @@ public class IoConnectionSubscriber implements IoSubscriber<OkResponse> {
         connection.close();
         // 如果是远程关闭连接则不需要通知上层业务
         if (!(cause instanceof ChannelClosedException)) {
-            actual.onError(cause);
+            subscriber.onError(cause);
         } else {
             Logger.debug(cause, "IoConnectionSubscriber socket " + connection.getRemoteAddress() + " closed");
         }

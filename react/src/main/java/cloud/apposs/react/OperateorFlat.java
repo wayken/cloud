@@ -28,22 +28,24 @@ public class OperateorFlat<T> implements OnSubscribe<Boolean> {
     }
 
     @Override
-    public void call(IoSubscriber<? super Boolean> t) throws Exception {
+    public void call(IoSubscriber<? super Boolean> subscriber) throws Exception {
         Iterator<? extends React<? extends T>> iterator = sequences.iterator();
-        FlatSubscriber<T> subscriber = new FlatSubscriber<T>(t, iterator, predicate);
+        FlatSubscriber<T> parent = new FlatSubscriber<T>(subscriber, iterator, predicate);
+        subscriber.add(parent);
         React<? extends T> source = iterator.next();
-        source.subscribe(subscriber).start();
+        source.subscribe(parent).start();
     }
 
-    private static class FlatSubscriber<T> extends IoSubscripberAdapter<T> {
-        final IoSubscriber<? super Boolean> actual;
+    private static class FlatSubscriber<T> extends IoSubscriber<T> {
+        final IoSubscriber<? super Boolean> subscriber;
 
         final Iterator<? extends React<? extends T>> sequences;
 
         final IoFunction<? super T, Boolean> predicate;
 
-        public FlatSubscriber(IoSubscriber<? super Boolean> actual, Iterator<? extends React<? extends T>> sequences, IoFunction<? super T, Boolean> predicate) {
-            this.actual = actual;
+        public FlatSubscriber(IoSubscriber<? super Boolean> subscriber, Iterator<? extends React<? extends T>> sequences, IoFunction<? super T, Boolean> predicate) {
+            super(subscriber);
+            this.subscriber = subscriber;
             this.sequences = sequences;
             this.predicate = predicate;
         }
@@ -59,17 +61,17 @@ public class OperateorFlat<T> implements OnSubscribe<Boolean> {
                 } else {
                     try {
                         // 已经没有下一个请求了，直接调用业务实现接口返回
-                        actual.onNext(true);
+                        subscriber.onNext(true);
                     } finally {
-                        actual.onCompleted();
+                        subscriber.onCompleted();
                     }
                 }
             } else {
                 try {
                     // 该次请求验证失败，直接调用业务实现接口返回
-                    actual.onNext(false);
+                    subscriber.onNext(false);
                 } finally {
-                    actual.onCompleted();
+                    subscriber.onCompleted();
                 }
             }
         }
@@ -77,9 +79,9 @@ public class OperateorFlat<T> implements OnSubscribe<Boolean> {
         @Override
         public void onError(Throwable e) {
             try {
-                actual.onError(e);
+                subscriber.onError(e);
             } finally {
-                actual.onCompleted();
+                subscriber.onCompleted();
             }
         }
     }

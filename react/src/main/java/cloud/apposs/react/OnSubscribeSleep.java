@@ -22,47 +22,47 @@ public class OnSubscribeSleep<T> implements OnSubscribe<T> {
     }
 
     @Override
-    public void call(IoSubscriber<? super T> t) throws Exception {
-        SleepSubscriber<T> subscriber = new SleepSubscriber<T>(t);
-        source.subscribe(subscriber).start();
+    public void call(IoSubscriber<? super T> subscriber) throws Exception {
+        SleepSubscriber<T> parent = new SleepSubscriber<T>(subscriber);
+        subscriber.add(parent);
+        source.subscribe(parent).start();
     }
 
-    class SleepSubscriber<T> implements IoSubscriber<T> {
-        private final IoSubscriber<? super T> actual;
-
-        SleepSubscriber(IoSubscriber<? super T> actual) {
-            this.actual = actual;
+    private class SleepSubscriber<T> extends SafeIoSubscriber<T> {
+        SleepSubscriber(IoSubscriber<? super T> subscriber) {
+            super(subscriber);
         }
 
         @Override
         public void onNext(T value) throws Exception {
-            scheduler.schedule(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        actual.onNext(value);
-                    } catch(Throwable t) {
-                        onError(t);
+            scheduler.schedule(() -> {
+                try {
+                    if (subscriber.isUnsubscribed()) {
+                        return;
                     }
+                    subscriber.onNext(value);
+                } catch(Throwable t) {
+                    onError(t);
                 }
             }, sleepTime, TimeUnit.MILLISECONDS);
         }
 
         @Override
         public void onCompleted() {
-            actual.onCompleted();
+            scheduler.schedule(() -> {
+                if (!subscriber.isUnsubscribed()) {
+                    subscriber.onCompleted();
+                }
+            }, sleepTime, TimeUnit.MILLISECONDS);
         }
 
         @Override
         public void onError(Throwable cause) {
-            scheduler.schedule(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        actual.onError(cause);
-                    } catch(Throwable t) {
-                        onError(t);
-                    }
+            scheduler.schedule(() -> {
+                try {
+                    subscriber.onError(cause);
+                } catch(Throwable t) {
+                    onError(t);
                 }
             }, sleepTime, TimeUnit.MILLISECONDS);
         }

@@ -15,15 +15,17 @@ public class OnSubscribeFromIterable<T> implements OnSubscribe<T> {
     }
 
     @Override
-    public void call(IoSubscriber<? super T> t) throws Exception {
-        try {
-            Iterator<? extends T> iterator = iterable.iterator();
-            while (iterator.hasNext()) {
-                T value = iterator.next();
-                t.onNext(value);
+    public void call(IoSubscriber<? super T> subscriber) throws Exception {
+        Iterator<? extends T> iterator = iterable.iterator();
+        while (iterator.hasNext()) {
+            if (subscriber.isUnsubscribed()) {
+                return;
             }
-        } finally{
-            t.onCompleted();
+            T value = iterator.next();
+            subscriber.onNext(value);
+        }
+        if (!subscriber.isUnsubscribed()) {
+            subscriber.onCompleted();
         }
     }
 }

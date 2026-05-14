@@ -12,6 +12,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @SuppressWarnings("unchecked")
 public class TestReact {
@@ -71,7 +72,7 @@ public class TestReact {
         }, () -> {
             System.out.println("just in");
             return React.just(1);
-        }).subscribe(new IoSubscripberAdapter<Integer>() {
+        }).subscribe(new IoSubscriber<Integer>() {
             @Override
             public void onNext(Integer value) throws Exception {
                 System.out.println("all execute result: " + value);
@@ -531,6 +532,71 @@ public class TestReact {
             }
         }).start();
         latch.await();
+    }
+
+    @Test
+    public void testUnsubscribeSynchronous() {
+        AtomicInteger received = new AtomicInteger(0);
+        IoSubscription subscription = React.from(1, 2, 3, 4, 5, 6)
+        .map(i -> {
+            System.out.println("Processing: " + i);
+            return i;
+        })
+        .repeat(4)
+        .subscribe(new IoSubscriber<Integer>() {
+            @Override
+            public void onNext(Integer value) throws Exception {
+                received.incrementAndGet();
+                System.out.println("onNext: " + value);
+                if (value == 3) {
+                    // 收到 3 后立即取消订阅
+                    unsubscribe();
+                }
+            }
+            @Override
+            public void onError(Throwable e) {
+                System.err.println("不应该触发 onError");
+            }
+            @Override
+            public void onCompleted() {
+                // 取消订阅后不会到达这里
+                System.out.println("onCompleted");
+            }
+        }).start();
+        // 只收到 1、2、3，之后被取消
+        System.out.println("Total received: " + received.get() + ", unsubscribed: " + subscription.isUnsubscribed());
+    }
+
+    @Test
+    public void testUnsubscribeAsynchronous() throws InterruptedException {
+        AtomicInteger received = new AtomicInteger(0);
+        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+        // interval 每 100ms 发射一个数字
+        IoSubscription subscription = React.interval(scheduler, 100, TimeUnit.MILLISECONDS)
+        .map((n) -> {
+            System.out.println("map: " + n);
+            return n + 1;
+        })
+        .subscribeOn(scheduler)
+        .subscribe(new IoSubscriber<Long>() {
+            @Override
+            public void unsubscribe() {
+                super.unsubscribe();
+                System.out.println("Unsubscribed at count: " + received.get());
+            }
+            @Override
+            public void onNext(Long value) {
+                received.incrementAndGet();
+                System.out.println("async onNext: " + value);
+            }
+        }).start();
+        // 让它跑 350ms，期间大约发射 3 个元素
+        Thread.sleep(350);
+        subscription.unsubscribe();
+        int countAfterUnsub = received.get();
+        Thread.sleep(300); // 再等 300ms，确认没有新元素到达
+        System.out.println("共收到 " + countAfterUnsub + " 个元素" + ", unsubscribed: " + subscription.isUnsubscribed());
+        Thread.sleep(30000);
     }
 
     private static List<String> fetchPage(int offset, int pageSize, int total) {

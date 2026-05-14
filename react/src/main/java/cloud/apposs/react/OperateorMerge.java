@@ -30,23 +30,25 @@ public class OperateorMerge<T> implements OnSubscribe<T> {
 	}
 
 	@Override
-	public void call(IoSubscriber<? super T> t) throws Exception {
-		MergeSubscriber<T> subscriber = new MergeSubscriber<T>(t, sequences.length);
+	public void call(IoSubscriber<? super T> subscriber) throws Exception {
+		MergeSubscriber<T> parent = new MergeSubscriber<T>(subscriber, sequences.length);
+		subscriber.add(parent);
 		for (int i = 0; i < sequences.length; i++) {
+			if (subscriber.isUnsubscribed()) {
+				return;
+			}
 			React<? extends T> react = sequences[i];
-            react.subscribe(subscriber).start();
+            react.subscribe(parent).start();
         }
 	}
 	
-	static final class MergeSubscriber<T> extends IoSubscripberAdapter<T> {
-		private final IoSubscriber<? super T> actual;
-		
+	private static final class MergeSubscriber<T> extends SafeIoSubscriber<T> {
 		private final int total;
 		
 		private final AtomicInteger index;
 		
-        public MergeSubscriber(IoSubscriber<? super T> actual, int total) {
-            this.actual = actual;
+        public MergeSubscriber(IoSubscriber<? super T> subscriber, int total) {
+            super(subscriber);
             this.total = total;
             this.index = new AtomicInteger(0);
         }
@@ -54,13 +56,13 @@ public class OperateorMerge<T> implements OnSubscribe<T> {
 		@Override
 		public void onNext(T value) {
 			try {
-				actual.onNext(value);
+				subscriber.onNext(value);
 				index.incrementAndGet();
 			} catch(Throwable t) {
 				onError(t);
 			} finally {
 				if (index.get() >= total) {
-					actual.onCompleted();
+					subscriber.onCompleted();
 				}
 			}
 		}
@@ -69,10 +71,10 @@ public class OperateorMerge<T> implements OnSubscribe<T> {
 		public void onError(Throwable t) {
 			try {
 				index.incrementAndGet();
-				actual.onError(t);
+				subscriber.onError(t);
 			} finally {
 				if (index.get() >= total) {
-					actual.onCompleted();
+					subscriber.onCompleted();
 				}
 			}
 		}
