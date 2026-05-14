@@ -24,7 +24,7 @@ public class IoSubscriptionList implements IoSubscription {
         return unsubscribed;
     }
 
-    public void add(IoSubscription subscription) {
+    public void add(IoSubscription subscription) throws Exception {
         if (subscription.isUnsubscribed()) {
             return;
         }
@@ -44,7 +44,7 @@ public class IoSubscriptionList implements IoSubscription {
         subscription.unsubscribe();
     }
 
-    public void remove(IoSubscription subscription) {
+    public void remove(IoSubscription subscription) throws Exception {
         if (!unsubscribed) {
             boolean unsubscribe;
             synchronized (this) {

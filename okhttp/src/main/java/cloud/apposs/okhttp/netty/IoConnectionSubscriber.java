@@ -25,7 +25,7 @@ public class IoConnectionSubscriber extends IoSubscriber<OkResponse> {
     }
 
     @Override
-    public void unsubscribe() {
+    public void unsubscribe() throws Exception {
         subscriber.unsubscribe();
     }
 

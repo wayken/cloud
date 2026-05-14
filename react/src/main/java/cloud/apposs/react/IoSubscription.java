@@ -14,5 +14,13 @@ public interface IoSubscription {
     /**
      * 取消订阅，所有处理器都不再处理数据流中的数据
      */
-    void unsubscribe();
+    void unsubscribe() throws Exception;
+
+    /**
+     * 注册取消订阅监听器，当{@link #unsubscribe()}被调用时触发
+     *
+     * @param onUnsubscribe 取消订阅时的回调
+     */
+    default void addOnUnsubscribe(IoRunnable onUnsubscribe) throws Exception {
+    }
 }

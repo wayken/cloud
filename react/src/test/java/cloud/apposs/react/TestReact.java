@@ -568,22 +568,17 @@ public class TestReact {
     }
 
     @Test
-    public void testUnsubscribeAsynchronous() throws InterruptedException {
+    public void testUnsubscribeAsynchronous() throws Exception {
         AtomicInteger received = new AtomicInteger(0);
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
         // interval 每 100ms 发射一个数字
         IoSubscription subscription = React.interval(scheduler, 100, TimeUnit.MILLISECONDS)
         .map((n) -> {
             System.out.println("map: " + n);
-            return n + 1;
+            return n;
         })
         .subscribeOn(scheduler)
         .subscribe(new IoSubscriber<Long>() {
-            @Override
-            public void unsubscribe() {
-                super.unsubscribe();
-                System.out.println("Unsubscribed at count: " + received.get());
-            }
             @Override
             public void onNext(Long value) {
                 received.incrementAndGet();
@@ -597,6 +592,39 @@ public class TestReact {
         Thread.sleep(300); // 再等 300ms，确认没有新元素到达
         System.out.println("共收到 " + countAfterUnsub + " 个元素" + ", unsubscribed: " + subscription.isUnsubscribed());
         Thread.sleep(30000);
+    }
+
+    @Test
+    public void testUnsubscribeWithListener() throws Exception {
+        AtomicInteger received = new AtomicInteger(0);
+        AtomicInteger unsubscribeCalled = new AtomicInteger(0);
+        ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+        IoSubscription subscription = React.interval(scheduler, 100, TimeUnit.MILLISECONDS)
+        .map(aLong -> {
+            System.out.println("map: " + aLong);
+            return aLong;
+        })
+        .filter(aLong -> {
+            System.out.println("filter: " + aLong);
+            return true;
+        })
+        .subscribe(new IoSubscriber<Long>() {
+            @Override
+            public void onNext(Long value) {
+                received.incrementAndGet();
+                System.out.println("onNext: " + value);
+            }
+        }).start();
+        // 注册 onUnsubscribe 监听
+        subscription.addOnUnsubscribe(() -> {
+            unsubscribeCalled.incrementAndGet();
+            System.out.println("onUnsubscribe triggered! received=" + received.get());
+        });
+        Thread.sleep(350);
+        subscription.unsubscribe();
+        System.out.println("unsubscribeCalled=" + unsubscribeCalled.get()
+                + ", isUnsubscribed=" + subscription.isUnsubscribed());
+        scheduler.shutdown();
     }
 
     private static List<String> fetchPage(int offset, int pageSize, int total) {
