@@ -15,17 +15,22 @@ public class IoConnectionSubscriber extends IoSubscriber<OkResponse> {
     private final NettyIoConnection connection;
 
     public IoConnectionSubscriber(IoSubscriber<? super OkResponse> subscriber, NettyIoConnection connection) {
-        super(subscriber);
         this.subscriber = subscriber;
         this.connection = connection;
     }
 
     @Override
+    public boolean isUnsubscribed() {
+        return subscriber.isUnsubscribed();
+    }
+
+    @Override
+    public void unsubscribe() {
+        subscriber.unsubscribe();
+    }
+
+    @Override
     public void onNext(OkResponse value) throws Exception {
-        // 请求已经被取消了，不需要继续处理了
-        if (isUnsubscribed()) {
-            return;
-        }
         // 在获取到所有响应数据后，如果是在连接池的则进行回收
         if (value.isCompleted()) {
             final IPooledConnection pool = connection.getPool();
@@ -34,6 +39,11 @@ public class IoConnectionSubscriber extends IoSubscriber<OkResponse> {
             }
         }
         subscriber.onNext(value);
+    }
+
+    @Override
+    public void onCompleted() {
+        subscriber.onCompleted();
     }
 
     @Override

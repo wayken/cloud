@@ -42,7 +42,7 @@ public abstract class IoSubscriber<T> implements IoObserver<T>, IoSubscription {
 	}
 
 	@Override
-	public final boolean isUnsubscribed() {
+	public boolean isUnsubscribed() {
 		return subscriptions.isUnsubscribed();
 	}
 

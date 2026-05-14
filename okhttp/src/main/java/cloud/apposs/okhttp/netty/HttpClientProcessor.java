@@ -46,7 +46,7 @@ public class HttpClientProcessor extends ChannelDuplexHandler {
 
     @Override
     public void connect(ChannelHandlerContext ctx, SocketAddress remoteAddress,
-                SocketAddress localAddress, ChannelPromise promise) throws Exception {
+                        SocketAddress localAddress, ChannelPromise promise) throws Exception {
         // 判断是否是改成走Proxy Pass请求转发
         RemoteSocketAddress proxyAddress = connection.getRemoteAddress();
         boolean isProxyPass = proxyAddress.proxy() == Proxy.Type.PROXYPASS;
@@ -72,12 +72,15 @@ public class HttpClientProcessor extends ChannelDuplexHandler {
         try {
             if (message instanceof FullHttpResponse) {
                 final OkRequest request = connection.getRequest();
+                IoConnectionSubscriber subscriber = (IoConnectionSubscriber) request.getAttribute(NettyIoConnection.CONTEXT_SUBSCRIBE);
+                if (subscriber.isUnsubscribed()) {
+                    return;
+                }
                 final FullHttpResponse httpResponse = (FullHttpResponse) message;
                 final Map<String, String> headers = new HashMap<String, String>();
                 for (Map.Entry<String, String> entry : httpResponse.headers().entries()) {
                     headers.put(entry.getKey(), entry.getValue());
                 }
-                IoConnectionSubscriber subscriber = (IoConnectionSubscriber) request.getAttribute(NettyIoConnection.CONTEXT_SUBSCRIBE);
                 OkResponse response = new OkResponse(request.uri(),
                         httpResponse.status().code(), headers, CachedFileStream.wrap(httpResponse.content().nioBuffer()));
                 subscriber.onNext(response);
@@ -104,6 +107,9 @@ public class HttpClientProcessor extends ChannelDuplexHandler {
                 String chunk = buffer.toString(connection.getBuilder().charset());
                 final OkRequest request = connection.getRequest();
                 IoConnectionSubscriber subscriber = (IoConnectionSubscriber) request.getAttribute(NettyIoConnection.CONTEXT_SUBSCRIBE);
+                if (subscriber.isUnsubscribed()) {
+                    return;
+                }
                 OkResponse response = (OkResponse) request.getAttribute(NettyIoConnection.CONTEXT_RESPONSE);
                 if (response == null) {
                     subscriber.onError(new IllegalStateException("remote address '" + request.url() + "' data error"));
