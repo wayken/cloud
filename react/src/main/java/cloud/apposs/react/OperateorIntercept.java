@@ -93,6 +93,16 @@ public class OperateorIntercept<T, R> implements OnSubscribe<R> {
                 }
             }
         }
+
+        @Override
+        public void onError(Throwable cause) {
+            subscriber.onError(cause);
+        }
+
+        @Override
+        public void onCompleted() {
+            subscriber.onCompleted();
+        }
     }
 
     public static class IResult {
