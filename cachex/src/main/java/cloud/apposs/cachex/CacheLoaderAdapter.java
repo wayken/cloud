@@ -52,7 +52,7 @@ public class CacheLoaderAdapter<K extends CacheKey, V> implements CacheLoader<K,
 
     @Override
     public int delete(K key, DBTemplate template, Object... args) throws Exception {
-        throw new UnsupportedOperationException("Not implemented method delete(K key, Dao dao, ...) of CacheLoader");
+        throw new UnsupportedOperationException("Not implemented method delete(K key, DBTemplate template, ...) of CacheLoader");
     }
 
     @Override
@@ -64,7 +64,7 @@ public class CacheLoaderAdapter<K extends CacheKey, V> implements CacheLoader<K,
     @Override
     public int delete(List<K> keys, DBTemplate template, Object... args) throws Exception {
         throw new UnsupportedOperationException(
-                "Not implemented method delete(List<K> keys, Dao dao, ...) of CacheLoader");
+                "Not implemented method delete(List<K> keys, DBTemplate template, ...) of CacheLoader");
     }
 
     @Override
