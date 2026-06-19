@@ -101,8 +101,12 @@ public final class Restful<R, P> {
     private ThreadPool executor;
 
     public Restful(RestConfig config) {
+        this(config, new BeanFactory());
+    }
+
+    public Restful(RestConfig config, BeanFactory beanFactory) {
         this.config = config;
-        this.beanFactory = new BeanFactory();
+        this.beanFactory = beanFactory;
         this.pluginSupport = new PluginSupport();
         this.applicationListenerSupport = new ApplicationListenerSupport();
         this.handlerRouter = new HandlerRouter<R, P>(config);
