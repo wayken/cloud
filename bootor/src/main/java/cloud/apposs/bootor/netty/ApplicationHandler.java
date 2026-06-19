@@ -1,7 +1,6 @@
 package cloud.apposs.bootor.netty;
 
 import cloud.apposs.bootor.*;
-import cloud.apposs.bootor.filter.FilterChain;
 import cloud.apposs.rest.Handler;
 import cloud.apposs.rest.IGuardProcess;
 import cloud.apposs.rest.IHandlerProcess;
@@ -28,12 +27,6 @@ public class ApplicationHandler extends SimpleChannelInboundHandler<FullHttpRequ
         NettyHttpResponse response = new NettyHttpResponse(context);
         // 解析请求参数
         NettyUtil.parseRequestParameter(fullHttpRequest, request, config);
-        // 处理请求过滤链过滤
-        FilterChain filterChain = this.context.getFilterChain();
-        boolean success = filterChain.filter(request, response);
-        if (!success) {
-            return;
-        }
         // 处理请求
         Restful<BootorHttpRequest, BootorHttpResponse> restful = this.context.getRestful();
         restful.renderView(new BootorHandlerProcess(), request, response);

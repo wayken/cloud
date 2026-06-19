@@ -1,22 +1,19 @@
-package cloud.apposs.bootor.filter;
-
-import cloud.apposs.bootor.BootorHttpRequest;
-import cloud.apposs.bootor.BootorHttpResponse;
+package cloud.apposs.rest.filter;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class FilterChain {
+public class FilterChain<R, P> {
     /**
      * 过滤器列表
      */
-    private final List<IFilter> filterList = new ArrayList<IFilter>();
+    private final List<IFilter<R, P>> filterList = new ArrayList<IFilter<R, P>>();
 
-    public void addFilter(IFilter filter) {
+    public void addFilter(IFilter<R, P> filter) {
         filterList.add(filter);
     }
 
-    public void removeFilter(IFilter filter) {
+    public void removeFilter(IFilter<R, P> filter) {
         filterList.remove(filter);
     }
 
@@ -28,8 +25,8 @@ public class FilterChain {
      * @return 返回true表示继续执行后续的过滤器，返回false表示停止执行后续的过滤器
      * @throws Exception
      */
-    public boolean filter(BootorHttpRequest request, BootorHttpResponse response) throws Exception {
-        for (IFilter filter : filterList) {
+    public boolean filter(R request, P response) throws Exception {
+        for (IFilter<R, P> filter : filterList) {
             boolean success = filter.filter(request, response);
             if (!success) {
                 return false;

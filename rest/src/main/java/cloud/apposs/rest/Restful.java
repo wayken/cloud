@@ -10,6 +10,8 @@ import cloud.apposs.react.React;
 import cloud.apposs.rest.annotation.Action;
 import cloud.apposs.rest.annotation.Order;
 import cloud.apposs.rest.annotation.RestAction;
+import cloud.apposs.rest.filter.FilterChain;
+import cloud.apposs.rest.filter.IFilter;
 import cloud.apposs.rest.interceptor.HandlerInterceptor;
 import cloud.apposs.rest.interceptor.HandlerInterceptorSupport;
 import cloud.apposs.rest.listener.ApplicationListener;
@@ -68,6 +70,11 @@ public final class Restful<R, P> {
     private final HandlerInterceptorSupport<R, P> handlerInterceptorSupport;
 
     /**
+     * 过滤器链，在Handler匹配前执行
+     */
+    private final FilterChain<R, P> filterChain;
+
+    /**
      * 处理器映射
      */
     private final HandlerRouter<R, P> handlerRouter;
@@ -101,6 +108,7 @@ public final class Restful<R, P> {
         this.handlerRouter = new HandlerRouter<R, P>(config);
         this.handlerListenerSupport = new HandlerListenerSupport<R, P>();
         this.handlerInterceptorSupport = new HandlerInterceptorSupport<R, P>();
+        this.filterChain = new FilterChain<R, P>();
         this.viewResolverSupport = new ViewResolverSupport<R, P>();
         this.handlerInvocation = new HandlerInvocation<R, P>();
     }
@@ -141,21 +149,21 @@ public final class Restful<R, P> {
         // 初始化参数解析器，包括用户自定义的和系统定义的，
         // 只要有配置basePackage和Component注解均扫描进来
         List<ParameterResolver> parameterResolverList = beanFactory.getBeanHierarchyList(ParameterResolver.class);
-        doSortByOrderAnnotation(parameterResolverList);
-        for (ParameterResolver parameterResolver : parameterResolverList) {
+        handleOrderAnnotationSort(parameterResolverList);
+        for (ParameterResolver<R, P> parameterResolver : parameterResolverList) {
             addParameterResolver(parameterResolver);
         }
 
         // 初始化视图渲染器，包括用户自定义的和系统定义的，同上
         List<ViewResolver> viewResolverList = beanFactory.getBeanHierarchyList(ViewResolver.class);
-        doSortByOrderAnnotation(viewResolverList);
-        for (ViewResolver viewResolver : viewResolverList) {
+        handleOrderAnnotationSort(viewResolverList);
+        for (ViewResolver<R, P> viewResolver : viewResolverList) {
             addViewResolver(viewResolver.build(config));
         }
 
         // 初始化插件服务
         List<Plugin> pluginList = beanFactory.getBeanHierarchyList(Plugin.class);
-        for (Plugin plugin : pluginList) {
+        for (Plugin<R, P> plugin : pluginList) {
             plugin.initialize(config);
             pluginSupport.addPlugin(plugin);
         }
@@ -167,16 +175,23 @@ public final class Restful<R, P> {
             applicationListenerSupport.addListener(listener);
         }
         List<HandlerListener> handlerListenerList = beanFactory.getBeanHierarchyList(HandlerListener.class);
-        for (HandlerListener listener : handlerListenerList) {
+        for (HandlerListener<R, P> listener : handlerListenerList) {
             listener.initialize(config);
             handlerListenerSupport.addListener(listener);
+        }
+
+        // 初始化过滤器
+        List<IFilter> filterList = beanFactory.getBeanHierarchyList(IFilter.class);
+        handleOrderAnnotationSort(filterList);
+        for (IFilter<R, P> filter : filterList) {
+            addFilter(filter);
         }
 
         // 初始化拦截器
         List<HandlerInterceptor> interceptorList = beanFactory.getBeanHierarchyList(HandlerInterceptor.class);
         // 对拦截器进行排序后添加
-        doSortByOrderAnnotation(interceptorList);
-        for (HandlerInterceptor interceptor : interceptorList) {
+        handleOrderAnnotationSort(interceptorList);
+        for (HandlerInterceptor<R, P> interceptor : interceptorList) {
             interceptor.initialize(context);
             handlerInterceptorSupport.addInterceptor(interceptor);
         }
@@ -259,6 +274,20 @@ public final class Restful<R, P> {
     }
 
     /**
+     * 添加过滤器
+     */
+    public void addFilter(IFilter<R, P> filter) {
+        filterChain.addFilter(filter);
+    }
+
+    /**
+     * 移除过滤器
+     */
+    public void removeFilter(IFilter<R, P> filter) {
+        filterChain.removeFilter(filter);
+    }
+
+    /**
      * 添加拦截器
      */
     public void addHandlerInterceptor(HandlerInterceptor<R, P> handlerInterceptor) {
@@ -332,6 +361,12 @@ public final class Restful<R, P> {
      */
     public void renderView(IHandlerProcess<R, P> handlerProcess, R request, P response) {
         try {
+            // 在Handler匹配前执行过滤器链
+            boolean success = filterChain.filter(request, response);
+            if (!success) {
+                return;
+            }
+
             // 容器一类的要做些操作才能走异步响应
             handlerProcess.markAsync(request, response);
 
@@ -378,7 +413,7 @@ public final class Restful<R, P> {
             if (handler.isExecutor()) {
                 react = react.subscribeOn(executor);
             }
-            react.subscribe(new ReactSubcriber(handler, request, response)).start();
+            react.subscribe((IoSubscriber) new ReactSubcriber(handler, request, response)).start();
         } catch (Throwable cause) {
             handleProcessError(request, response, null, cause);
         }
@@ -438,7 +473,7 @@ public final class Restful<R, P> {
     /**
      * 根据Order注解进行列表的排序
      */
-    private <T> void doSortByOrderAnnotation(List<T> compareList) {
+    private <T> void handleOrderAnnotationSort(List<T> compareList) {
         Collections.sort(compareList, (object1, object2) -> {
             Order order1 = object1.getClass().getAnnotation(Order.class);
             Order order2 = object2.getClass().getAnnotation(Order.class);

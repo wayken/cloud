@@ -6,8 +6,6 @@ import cloud.apposs.bootor.BootorConfig.GuardRule;
 import cloud.apposs.bootor.BootorConfig.RegistryConfig;
 import cloud.apposs.bootor.banner.Banner;
 import cloud.apposs.bootor.banner.BootorBanner;
-import cloud.apposs.bootor.filter.FilterChain;
-import cloud.apposs.bootor.filter.IFilter;
 import cloud.apposs.discovery.DiscoveryFactory;
 import cloud.apposs.discovery.IDiscovery;
 import cloud.apposs.guard.GuardRuleConfig;
@@ -47,8 +45,6 @@ public abstract class ApplicationContext {
     protected Class<?> primarySource;
 
     protected AtomicBoolean shutdown = new AtomicBoolean(false);
-
-    protected FilterChain filterChain;
 
     // RESTFUL MVC组件
     protected Restful<BootorHttpRequest, BootorHttpResponse> restful;
@@ -112,10 +108,6 @@ public abstract class ApplicationContext {
         return config;
     }
 
-    public FilterChain getFilterChain() {
-        return filterChain;
-    }
-
     public Restful<BootorHttpRequest, BootorHttpResponse> getRestful() {
         return restful;
     }
@@ -150,14 +142,6 @@ public abstract class ApplicationContext {
         // 初始化MVC框架，从框架配置扫描包路径中扫描所有Bean实例
         restful.initialize();
 
-        // 初始化过滤器链
-        filterChain = new FilterChain();
-        List<IFilter> filterList = beanFactory.getBeanHierarchyList(IFilter.class);
-        handleOrderAnnotationSort(filterList);
-        for (IFilter filter : filterList) {
-            filterChain.addFilter(filter);
-        }
-
         // 初始化熔断参数解析服务
         guard = beanFactory.getBeanHierarchy(IGuardProcess.class);
         handleIinitGuardRuleConfig(config);
@@ -170,7 +154,9 @@ public abstract class ApplicationContext {
         if (serviceInstance != null) {
             RegistryConfig regstConfig = config.getRegistryConfig();
             registry = RegistryFactory.createRegistry(regstConfig.getRegistryType(), regstConfig.getRegistryUrl(), regstConfig.getRegistryPath());
-            registry.registInstance(serviceInstance);
+            if (registry != null) {
+                registry.registInstance(serviceInstance);
+            }
         }
 
         // 注册服务被kill时的回调
@@ -292,15 +278,12 @@ public abstract class ApplicationContext {
      * 根据Order注解进行列表的排序
      */
     private <T> void handleOrderAnnotationSort(List<T> compareList) {
-        Collections.sort(compareList, new Comparator<T>() {
-            @Override
-            public int compare(T object1, T object2) {
-                Order order1 = object1.getClass().getAnnotation(Order.class);
-                Order order2 = object2.getClass().getAnnotation(Order.class);
-                int order1Value = order1 == null ? 0 : order1.value();
-                int order2Value = order2 == null ? 0 : order2.value();
-                return order1Value - order2Value;
-            }
+        Collections.sort(compareList, (object1, object2) -> {
+            Order order1 = object1.getClass().getAnnotation(Order.class);
+            Order order2 = object2.getClass().getAnnotation(Order.class);
+            int order1Value = order1 == null ? 0 : order1.value();
+            int order2Value = order2 == null ? 0 : order2.value();
+            return order1Value - order2Value;
         });
     }
 

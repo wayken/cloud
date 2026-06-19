@@ -1,7 +1,4 @@
-package cloud.apposs.bootor.filter;
-
-import cloud.apposs.bootor.BootorHttpRequest;
-import cloud.apposs.bootor.BootorHttpResponse;
+package cloud.apposs.rest.filter;
 
 /**
  * 过滤器接口，用于对请求进行过滤处理，和{@link cloud.apposs.rest.interceptor.HandlerInterceptor}的区别在于，
@@ -11,7 +8,7 @@ import cloud.apposs.bootor.BootorHttpResponse;
  *     3、过滤器可以对所有请求进行拦截，而拦截器只能对Handler的执行进行拦截，所以如果没有找到匹配的Handler，那么拦截器也不会执行，而过滤器会执行
  * </pre>
  */
-public interface IFilter {
+public interface IFilter<R, P> {
     /**
      * 过滤器处理方法
      *
@@ -20,5 +17,5 @@ public interface IFilter {
      * @return 返回true表示继续执行后续的过滤器，返回false表示停止执行后续的过滤器
      * @throws Exception
      */
-    boolean filter(BootorHttpRequest request, BootorHttpResponse response) throws Exception;
+    boolean filter(R request, P response) throws Exception;
 }

@@ -6,7 +6,6 @@ import cloud.apposs.ioc.annotation.Component;
 import cloud.apposs.rest.annotation.Order;
 
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 /**
@@ -66,23 +65,20 @@ public class ApplicationContextHolder {
         // 获取实现类列表
         List<T> beanList = beanFactory.getBeanHierarchyList(beanType);
         // 对实现类进行Order注解排序，方便定义调用次序
-        doSortByOrderAnnotation(beanList);
+        handleOrderAnnotationSort(beanList);
         return beanList;
     }
 
     /**
      * 根据Order注解进行列表的排序
      */
-    private <T> void doSortByOrderAnnotation(List<T> compareList) {
-        Collections.sort(compareList, new Comparator<T>() {
-            @Override
-            public int compare(T object1, T object2) {
-                Order order1 = object1.getClass().getAnnotation(Order.class);
-                Order order2 = object2.getClass().getAnnotation(Order.class);
-                int order1Value = order1 == null ? 0 : order1.value();
-                int order2Value = order2 == null ? 0 : order2.value();
-                return order1Value - order2Value;
-            }
+    private <T> void handleOrderAnnotationSort(List<T> compareList) {
+        Collections.sort(compareList, (object1, object2) -> {
+            Order order1 = object1.getClass().getAnnotation(Order.class);
+            Order order2 = object2.getClass().getAnnotation(Order.class);
+            int order1Value = order1 == null ? 0 : order1.value();
+            int order2Value = order2 == null ? 0 : order2.value();
+            return order1Value - order2Value;
         });
     }
 }
