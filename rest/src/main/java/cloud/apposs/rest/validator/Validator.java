@@ -57,14 +57,26 @@ public final class Validator {
         Class<?> clazz = instance.getClass();
         do {
             Map<String, Method> methods = ReflectUtil.getDeclaredMethodMap(clazz, true);
-            doParseOptional(document, methods, instance, clazz);
+            handleOptionalParse(document, methods, instance, clazz);
             clazz = clazz.getSuperclass();
         } while (!clazz.isAssignableFrom(Object.class));
         return instance;
     }
 
     /**
+     * 获取字段解析器
+     *
+     * @param annotation 注解类
+     */
+    public static IChecker getChecker(Class<? extends Annotation> annotation) {
+        return checkers.get(annotation);
+    }
+
+    /**
      * 添加字段解析器
+     *
+     * @param annotation 注解类
+     * @param checker    解析器实例
      */
     public static IChecker addChecker(Class<? extends Annotation> annotation, IChecker checker) {
         return checkers.put(annotation, checker);
@@ -79,17 +91,19 @@ public final class Validator {
 
     /**
      * 移除字段解析器
+     *
+     * @param annotation 注解类
      */
     public static IChecker removeChecker(Class<? extends Annotation> annotation) {
         return checkers.remove(annotation);
     }
 
-    private static void doParseOptional(Param document, Map<String, Method> methods, Object object, Class<?> clazz) throws Exception {
+    private static void handleOptionalParse(Param document, Map<String, Method> methods, Object object, Class<?> clazz) throws Exception {
         for (Map.Entry<String, Method> entry : methods.entrySet()) {
             String methodName = entry.getKey();
             Method method = entry.getValue();
             try {
-                doParsePropertyNode(document, methodName, object, clazz, method);
+                handlePropertyNodeParse(document, methodName, object, clazz, method);
             } catch (Exception e) {
                 Object value = document.getObject(methodName);
                 throw new IllegalArgumentException("argument '" + methodName +
@@ -99,8 +113,7 @@ public final class Validator {
     }
 
     @SuppressWarnings("unchecked")
-    private static boolean doParsePropertyNode(Param document, String methodName,
-                Object model, Class<?> modelClazz, Method method) throws Exception {
+    private static boolean handlePropertyNodeParse(Param document, String methodName, Object model, Class<?> modelClazz, Method method) throws Exception {
         // 解析XML PROPERTY属性值并反射调用到类中
         Class<?>[] methodTypes = method.getParameterTypes();
         // setXXX(Object obj)方法必须要有参数
@@ -178,7 +191,7 @@ public final class Validator {
                     for (int i = 0; i < childDocList.size(); i++) {
                         Object fieldObject = genericClazz.newInstance();
                         Param childDoc = childDocList.get(i);
-                        doParseOptional(childDoc, modelMethods, fieldObject, fieldObject.getClass());
+                        handleOptionalParse(childDoc, modelMethods, fieldObject, fieldObject.getClass());
                         fieldList.add(fieldObject);
                     }
                 }
@@ -224,7 +237,7 @@ public final class Validator {
                 // 有可能属性类继承新增了方法，需要重新获取
                 Class<?> fieldClazz = fieldObject.getClass();
                 Map<String, Method> fieldMethods = ReflectUtil.getDeclaredMethodMap(fieldClazz, true);
-                doParseOptional((Param) childObj, fieldMethods, fieldObject, fieldClazz);
+                handleOptionalParse((Param) childObj, fieldMethods, fieldObject, fieldClazz);
             } else {
                 // 对象属性为手动注入实例
                 if (method.getName().startsWith("set")) {
