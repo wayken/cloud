@@ -23,7 +23,9 @@ public class YamlConfigParser implements ConfigurationParser {
      */
     @Override
     public final void parse(Object model, String filename) throws Exception {
-        parse(model, ResourceUtil.getResource(filename));
+        try (InputStream is = ResourceUtil.getResource(filename)) {
+            parse(model, is);
+        }
     }
 
     @Override
