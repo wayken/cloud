@@ -83,13 +83,6 @@ public final class Validator {
     }
 
     /**
-     * 获取字段解析器
-     */
-    public static IChecker getChecker(Class<? extends Annotation> annotation) {
-        return checkers.get(annotation);
-    }
-
-    /**
      * 移除字段解析器
      *
      * @param annotation 注解类
