@@ -416,7 +416,7 @@ public class JsonUtil {
                         }
 
                         status = JSON_STATUS_VALUE_END;
-                        param.put(key, value);
+                        param.put(key, value instanceof Null ? null : value);
                         index = context.valueEndIdx;
                         continue;
                     case JSON_STATUS_VALUE_END:
