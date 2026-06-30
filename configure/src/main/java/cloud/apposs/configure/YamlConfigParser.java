@@ -34,7 +34,7 @@ public class YamlConfigParser implements ConfigurationParser {
         Class<?> clazz = model.getClass();
         do {
             Map<String, Method> methods = ReflectUtil.getDeclaredMethodMap(clazz);
-            doParseOptional(properties, methods, model, clazz);
+            handleOptionalParse(properties, methods, model, clazz);
             clazz = clazz.getSuperclass();
         } while (clazz != null);
     }
@@ -54,12 +54,12 @@ public class YamlConfigParser implements ConfigurationParser {
 
     private static Map<String, Object> getFlattenedMap(Map<String, Object> source) {
         Map<String, Object> result = new LinkedHashMap<>();
-        doBuildFlattenedMap(result, source, null);
+        handleFlattenedMapBuild(result, source, null);
         return result;
     }
 
     @SuppressWarnings("unchecked")
-    private static void doBuildFlattenedMap(Map<String, Object> result, Map<String, Object> source, String path) {
+    private static void handleFlattenedMapBuild(Map<String, Object> result, Map<String, Object> source, String path) {
         source.forEach((key, value) -> {
             if (StrUtil.hasText(path)) {
                 if (key.startsWith("[")) {
@@ -74,7 +74,7 @@ public class YamlConfigParser implements ConfigurationParser {
             } else if (value instanceof Map) {
                 Map<String, Object> map = (Map<String, Object>) value;
                 result.put(key, map);
-                doBuildFlattenedMap(result, map, key);
+                handleFlattenedMapBuild(result, map, key);
             } else {
                 result.put(key, (value != null ? value : ""));
             }
@@ -82,7 +82,7 @@ public class YamlConfigParser implements ConfigurationParser {
     }
 
     @SuppressWarnings("unchecked")
-    private static void doParseOptional(Map<String, Object> document, Map<String, Method> methods, Object model, Class<?> clazz) throws Exception {
+    private static void handleOptionalParse(Map<String, Object> document, Map<String, Method> methods, Object model, Class<?> clazz) throws Exception {
         // 是否有指定要读取的JSON节点，默认从根节点开始解析
         if (document == null || document.size() <= 0) {
             return;
@@ -94,7 +94,7 @@ public class YamlConfigParser implements ConfigurationParser {
             Value methodAnnotation = propertyField.getAnnotation(Value.class);
             String propertyName = methodAnnotation != null ? methodAnnotation.value(): methodName;
             if (document.containsKey(propertyName)) {
-                doParsePropertyNode(document, methodName, propertyName, model, clazz, entry.getValue());
+                handlePropertyNodeParse(document, methodName, propertyName, model, clazz, entry.getValue());
                 continue;
             }
             // 通过读取注解方式在JSON中的配置递归解析JSON节点
@@ -121,13 +121,13 @@ public class YamlConfigParser implements ConfigurationParser {
             }
             Map<String, Object> childDoc = (Map<String, Object>) document.get(annotationName);
             Map<String, Method> modelMethods = ReflectUtil.getDeclaredMethodMap(fieldType);
-            doParseOptional(childDoc, modelMethods, fieldObject, fieldObject.getClass());
+            handleOptionalParse(childDoc, modelMethods, fieldObject, fieldObject.getClass());
         }
     }
 
     @SuppressWarnings("unchecked")
-    private static boolean doParsePropertyNode(Map<String, Object> document, String methodName,
-                                               String propertyName, Object model, Class<?> modelClazz, Method method) throws Exception {
+    private static boolean handlePropertyNodeParse(Map<String, Object> document, String methodName,
+                String propertyName, Object model, Class<?> modelClazz, Method method) throws Exception {
         // 解析XML PROPERTY属性值并反射调用到类中
         Class<?>[] methodTypes = method.getParameterTypes();
         // setXXX(Object obj)方法必须要有参数
@@ -181,7 +181,7 @@ public class YamlConfigParser implements ConfigurationParser {
                 for (String key : param.keySet()) {
                     Object fieldObject = valGenericClazz.newInstance();
                     Map<String, Object> childDoc = (Map<String, Object>) param.get(key);
-                    doParseOptional(childDoc, modelMethods, fieldObject, fieldObject.getClass());
+                    handleOptionalParse(childDoc, modelMethods, fieldObject, fieldObject.getClass());
                     fieldMap.put(key, fieldObject);
                 }
             }
@@ -204,6 +204,8 @@ public class YamlConfigParser implements ConfigurationParser {
                 if (fieldList == null) {
                     fieldList = new LinkedList<Object>();
                     method.invoke(model, fieldList);
+                } else {
+                    fieldList.clear();
                 }
                 List<Map<String, Object>> childDocList = (List<Map<String, Object>>) document.get(propertyName);
                 if (childDocList != null) {
@@ -219,12 +221,14 @@ public class YamlConfigParser implements ConfigurationParser {
                 if (fieldList == null) {
                     fieldList = new LinkedList<Object>();
                     method.invoke(model, fieldList);
+                } else {
+                    fieldList.clear();
                 }
                 List<Map<String, Object>> childDocList = (List<Map<String, Object>>) document.get(propertyName);
                 Map<String, Method> modelMethods = ReflectUtil.getDeclaredMethodMap(genericClazz);
                 for (Map<String, Object> childDoc : childDocList) {
                     Object fieldObject = genericClazz.newInstance();
-                    doParseOptional(childDoc, modelMethods, fieldObject, fieldObject.getClass());
+                    handleOptionalParse(childDoc, modelMethods, fieldObject, fieldObject.getClass());
                     fieldList.add(fieldObject);
                 }
             }
@@ -252,6 +256,8 @@ public class YamlConfigParser implements ConfigurationParser {
             if (fieldTable == null) {
                 fieldTable = Table.builder();
                 method.invoke(model, fieldTable);
+            } else {
+                fieldTable.clear();
             }
             if (ReflectUtil.isGenericType(genericClazz)) {
                 // Table值为普通数据类型，直接赋值列表元素
@@ -276,7 +282,7 @@ public class YamlConfigParser implements ConfigurationParser {
                 if (childDocList != null) {
                     for (Map<String, Object> childDoc : childDocList) {
                         Object fieldObject = genericClazz.newInstance();
-                        doParseOptional(childDoc, modelMethods, fieldObject, fieldObject.getClass());
+                        handleOptionalParse(childDoc, modelMethods, fieldObject, fieldObject.getClass());
                         fieldTable.add(fieldObject);
                     }
                 }
@@ -297,7 +303,7 @@ public class YamlConfigParser implements ConfigurationParser {
             Class<?> fieldClazz = fieldObject.getClass();
             Map<String, Object> childDoc = (Map<String, Object>) document.get(propertyName);
             Map<String, Method> fieldMethods = ReflectUtil.getDeclaredMethodMap(fieldClazz);
-            doParseOptional(childDoc, fieldMethods, fieldObject, fieldClazz);
+            handleOptionalParse(childDoc, fieldMethods, fieldObject, fieldClazz);
         }
         return true;
     }
