@@ -163,6 +163,17 @@ public class YamlConfigParser implements ConfigurationParser {
                 for (String key : param.keySet()) {
                     fieldMap.put(key, param.get(key));
                 }
+            } else if (valGenericClazz.equals(Param.class)) {
+                // Map值为Param类型（Map的封装），直接将Map数据转为Param对象
+                Map<String, Object> param = (Map<String, Object>) document.get(propertyName);
+                for (String key : param.keySet()) {
+                    Param paramObj = Param.builder();
+                    Object childVal = param.get(key);
+                    if (childVal instanceof Map) {
+                        paramObj.putAll((Map<String, Object>) childVal);
+                    }
+                    fieldMap.put(key, paramObj);
+                }
             } else {
                 // Map值为自定义对象类型，递归解析对象并添加到Map中
                 Map<String, Object> param = (Map<String, Object>) document.get(propertyName);
@@ -186,6 +197,21 @@ public class YamlConfigParser implements ConfigurationParser {
                 Object nodeVal = document.get(propertyName);
                 if (nodeVal != null) {
                     method.invoke(model, nodeVal);
+                }
+            } else if (genericClazz.equals(Param.class)) {
+                // List值为Param类型（Map的封装），直接将Map数据转为Param对象
+                List<Object> fieldList = (List<Object>) field.get(model);
+                if (fieldList == null) {
+                    fieldList = new LinkedList<Object>();
+                    method.invoke(model, fieldList);
+                }
+                List<Map<String, Object>> childDocList = (List<Map<String, Object>>) document.get(propertyName);
+                if (childDocList != null) {
+                    for (Map<String, Object> childDoc : childDocList) {
+                        Param param = Param.builder();
+                        param.putAll(childDoc);
+                        fieldList.add(param);
+                    }
                 }
             } else {
                 // List值为自定义对象类型，递归解析对象并添加到List中
@@ -232,6 +258,16 @@ public class YamlConfigParser implements ConfigurationParser {
                 List<Object> nodeVal = (List<Object>) document.get(propertyName);
                 if (nodeVal != null) {
                     fieldTable.addAll(nodeVal);
+                }
+            } else if (genericClazz.equals(Param.class)) {
+                // Table值为Param类型（Map的封装），直接将Map数据转为Param对象
+                List<Map<String, Object>> childDocList = (List<Map<String, Object>>) document.get(propertyName);
+                if (childDocList != null) {
+                    for (Map<String, Object> childDoc : childDocList) {
+                        Param param = Param.builder();
+                        param.putAll(childDoc);
+                        fieldTable.add(param);
+                    }
                 }
             } else {
                 // Table值为自定义对象类型，递归解析对象并添加到Table中
